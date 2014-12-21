@@ -59,7 +59,6 @@ open FH, '>output.json' || die $!;
 my $json = JSON->new;
 print FH $json->pretty->encode(\@output);
 close FH;
-print $json->pretty->encode(\@output);
 
 sub check {
   my ($host) = @_;
