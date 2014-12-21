@@ -178,7 +178,7 @@ sub check_ssl {
       } else {
         print GREEN " success", RESET;
       }
-      push  $accepted_protocols, $ssl_version ;
+      push @{$accepted_protocols}, $ssl_version ;
       print " (with ".$default_cipher.")\n";
 
       $good_ciphers->{$ssl_version} = [];
@@ -201,10 +201,10 @@ sub check_ssl {
           if ($sock && $sock->opened) {
             if ($level eq 'weak') {
               print RED "    ${cipher} OK (weak)\n", RESET;
-              push  $weak_ciphers->{$ssl_version}, $cipher;
+              push  @{$weak_ciphers->{$ssl_version}}, $cipher;
             } else {
               print GREEN "    ${cipher} OK (good)\n", RESET;
-              push  $good_ciphers->{$ssl_version}, $cipher;
+              push  @{$good_ciphers->{$ssl_version}}, $cipher;
             }
             $sock->close();
           }
