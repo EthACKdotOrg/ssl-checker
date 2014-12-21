@@ -287,6 +287,7 @@ sub check_cert {
   }
 
   return {
+    alt_names  => \@altnames,
     issuer     => $issuer,
     key_algo   => $key_alg,
     match_top  => $match_root,
