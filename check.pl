@@ -32,7 +32,7 @@ my @useragents = (
   'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/4.0; InfoPath.2; SV1; .NET CLR 2.0.50727; WOW64)',
 );
 
-open my $fh,  '<', $file || die $!;
+open my $fh,  '<', $file or die $!;
 
 my ($front, $ebanking);
 my @output = ();
@@ -55,7 +55,7 @@ while(my $row = $csv->getline($fh)) {
 }
 close $file;
 
-open FH, '>output.json' || die $!;
+open FH, '>output.json' or die $!;
 my $json = JSON->new;
 print FH $json->pretty->encode(\@output);
 close FH;
