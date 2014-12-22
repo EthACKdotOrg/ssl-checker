@@ -101,35 +101,69 @@ sub check_ssl {
     'TLSv12',
   );
   my %ssl_ciphers = (
-    weak => [
-      '3DES',
-      'ADH',
-      'AECDH-NULL-SHA',
-      'aNULL',
-      'DES',
-      'EDH-RSA-DES-CBC-SHA',
-      'eNULL',
-      'EXP',
-      'EXPORT40',
-      'EXPORT56',
-      'kECDH',
-      'KRB5',
-      'LOW',
-      'MD5',
-      'PSK',
-      'RC4',
-      'RC2',
-      'SHA',
-      'SRP',
-    ],
-    good => [
-      'AES',
-      'CAMELLIA',
-      'EECDH',
-      'EDH-aRSA',
-      'HIGH',
-      'SHA256',
-    ],
+# https://www.websense.com/support/article/kbarticle/Security-Vulnerability-Weak-Supported-SSL-Cypher-Suites-for-Apache-HTTPD-server
+    weak => {
+      '3DES'                    => 'no_pfs',
+      'ADH'                     => 'no_pfs',
+      'AECDH-NULL-SHA'          => 'no_pfs',
+      'aNULL'                   => 'no_pfs',
+      'DES'                     => 'no_pfs',
+      'EDH-RSA-DES-CBC-SHA'     => 'no_pfs',
+      'eNULL'                   => 'no_pfs',
+      'EXP'                     => 'no_pfs',
+      'EXP-EDH-RSA-DES-CBC-SHA' => 'pfs',
+      'EXP-DES-CBC-SHA'         => 'no_pfs',
+      'EXP-RC2-CBC-MD5'         => 'no_pfs',
+      'EXP-RC4-MD5'             => 'no_pfs',
+      'EXP-EDH-RSA-DES-CBC-SHA' => 'pfs',
+      'EXP-DES-CBC-SHA'         => 'no_pfs',
+      'EXP-RC2-CBC-MD5'         => 'no_pfs',
+      'EXP-RC4-MD5'             => 'no_pfs',
+      'EXPORT40'                => 'no_pfs',
+      'EXPORT56'                => 'no_pfs',
+      'kECDH'                   => 'no_pfs',
+      'KRB5'                    => 'no_pfs',
+      'LOW'                     => 'no_pfs',
+      'MD5'                     => 'no_pfs',
+      'PSK'                     => 'no_pfs',
+      'RC4'                     => 'no_pfs',
+      'RC2'                     => 'no_pfs',
+      'SHA1'                    => 'no_pfs',
+      'SRP'                     => 'no_pfs',
+    },
+# https://alpacapowered.wordpress.com/2014/12/15/cipher-suite-for-qualys-ssl-labs-server-test-aa-rating/
+    good => {
+      'ECDHE-RSA-AES256-GCM-SHA384'     => 'pfs',
+      'ECDHE-ECDSA-AES256-GCM-SHA384'   => 'pfs',
+      'ECDHE-RSA-AES256-SHA384'         => 'pfs',
+      'ECDHE-ECDSA-AES256-SHA384'       => 'pfs',
+      'ECDHE-RSA-AES256-SHA'            => 'pfs',
+      'ECDHE-ECDSA-AES256-SHA'          => 'pfs',
+      'DHE-DSS-AES256-GCM-SHA384'       => 'pfs',
+      'DHE-RSA-AES256-GCM-SHA384'       => 'pfs',
+      'DHE-RSA-AES256-SHA256'           => 'pfs',
+      'DHE-DSS-AES256-SHA256'           => 'pfs',
+      'DHE-RSA-AES256-SHA'              => 'pfs',
+      'DHE-DSS-AES256-SHA'              => 'pfs',
+      'AES256-GCM-SHA384'               => 'no_pfs',
+      'AES256-SHA256'                   => 'no_pfs',
+      'AES256-SHA'                      => 'no_pfs',
+      'ECDHE-RSA-AES128-GCM-SHA256'     => 'pfs',
+      'ECDHE-ECDSA-AES128-GCM-SHA256'   => 'pfs',
+      'ECDHE-RSA-AES128-SHA256'         => 'pfs',
+      'ECDHE-ECDSA-AES128-SHA256'       => 'pfs',
+      'ECDHE-RSA-AES128-SHA'            => 'pfs',
+      'ECDHE-ECDSA-AES128-SHA'          => 'pfs',
+      'DHE-DSS-AES128-GCM-SHA256'       => 'pfs',
+      'DHE-RSA-AES128-GCM-SHA256'       => 'pfs',
+      'DHE-RSA-AES128-SHA256'           => 'pfs',
+      'DHE-DSS-AES128-SHA256'           => 'pfs',
+      'DHE-RSA-AES128-SHA'              => 'pfs',
+      'DHE-DSS-AES128-SHA'              => 'pfs',
+      'AES128-GCM-SHA256'               => 'no_pfs',
+      'AES128-SHA256'                   => 'no_pfs',
+      'AES128-SHA'                      => 'no_pfs',
+    },
   );
 
   my $sock;
@@ -141,6 +175,7 @@ sub check_ssl {
     $default_cipher,
     $hash,
     $level,
+    $pfs,
   );
   my $accepted_protocols = [];
   my $good_ciphers = {};
@@ -185,7 +220,7 @@ sub check_ssl {
       $good_ciphers->{$ssl_version} = [];
       $weak_ciphers->{$ssl_version} = [];
       while (($level, $ciphers_list) = each(%ssl_ciphers)) {
-        foreach $cipher (@{$ciphers_list}) {
+        while (($cipher, $pfs) = each (%{$ciphers_list})) {
           $sock = IO::Socket::SSL->new(
             # where to connect
             PeerHost => $host,
@@ -201,11 +236,11 @@ sub check_ssl {
           );
           if ($sock && $sock->opened) {
             if ($level eq 'weak') {
-              print RED "    ${cipher} OK (weak)\n", RESET;
-              push  @{$weak_ciphers->{$ssl_version}}, $cipher;
+              print RED "    ${cipher} OK (weak, ${pfs})\n", RESET;
+              push  @{$weak_ciphers->{$ssl_version}}, {$cipher => $pfs};
             } else {
-              print GREEN "    ${cipher} OK (good)\n", RESET;
-              push  @{$good_ciphers->{$ssl_version}}, $cipher;
+              print GREEN "    ${cipher} OK (good, ${pfs})\n", RESET;
+              push  @{$good_ciphers->{$ssl_version}}, {$cipher => $pfs};
             }
             $sock->close();
           }
