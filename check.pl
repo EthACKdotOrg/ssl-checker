@@ -315,7 +315,6 @@ sub check_server {
 
   my $url = "https://${host}/";
   my $res = $ua->head($url);
-  print Dumper($res);
 
   return {
     hsts   => ($res->header('strict-transport-security') || ''),
