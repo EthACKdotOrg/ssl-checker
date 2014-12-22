@@ -21,18 +21,20 @@ script run with live output.
 * default cipher negociated with the server
 * accepted protocols (SSLv3, TLS1, TLS11 and TLS12)
 * accepted cipher strings per protocol
-* IP information (IP addresses and RIPE informations)
+* IP information (IP addresses and RIPE information)
 * certificate issuer
 * certificate subject
 * certificate altName
 * certificate validity dates
+* certificate algorithm
+* server headers (CSP, HSTS, X-Frame)
+* server version (when available)
+* heartbleed status
 
 ## Side notes
 This script was first a test in order to check some Swiss e-banking connection.
 It's not perfect, and there might be better way to do those tests. Its output is
 just an indication.
-
-For now, it doesn't test for known CVE like POODLE, Heartbleed and so on.
 
 ## Dependencies
 * [Data::Dumper](http://search.cpan.org/~smueller/Data-Dumper-2.154/Dumper.pm)
