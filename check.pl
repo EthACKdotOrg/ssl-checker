@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use warnings;
 use strict;
@@ -76,7 +76,7 @@ sub check {
   my $req = HTTP::Request->new('GET',"http://${host}/");
   my $res = $ua->request($req);
   my $res_code = $res->code();
-  my $redirect;
+  my ($redirect, $non_ssl_code);
   print "  redirection:";
   if ($res_code == 302 || $res_code == 301) {
     print GREEN,BOLD " OK\n", RESET;
@@ -85,13 +85,14 @@ sub check {
     print RED,BOLD " NOK", RESET;
     print " (${res_code})\n";
     $redirect = 'no';
+    $non_ssl_code = $res_code;
   }
 
-  check_ssl($host, $redirect);
+  check_ssl($host, $redirect, $non_ssl_code);
 }
 
 sub check_ssl {
-  my ($host, $redirect) = @_;
+  my ($host, $redirect, $non_ssl_code) = @_;
 
   my @ssl_versions = (
     'SSLv3',
@@ -235,17 +236,21 @@ sub check_ssl {
     }
   }
 
+  my $check_server = check_server($host);
+
   $hash = {
-    host           => $host,
-    ips            => $ips,
-    redirect       => $redirect,
+    certificate    => $certificate,
     ciphers        => {
       good         => $good_ciphers,
       weak         => $weak_ciphers
     },
-    certificate    => $certificate,
-    protocols      => $accepted_protocols,
     default_cipher => $default_cipher,
+    host           => $host,
+    ips            => $ips,
+    non_ssl_code   => $non_ssl_code,
+    protocols      => $accepted_protocols,
+    redirect       => $redirect,
+    server_info    => $check_server,
   };
 
   return $hash;
@@ -295,5 +300,27 @@ sub check_cert {
     not_before => $not_before,
     not_after  => $not_after,
     sign_algo  => $sign_alg,
+  };
+}
+
+sub check_server {
+  my ($host) = @_;
+
+  my $agent = $useragents[rand @useragents];
+  my $ua = LWP::UserAgent->new();
+  # deactivate redirection
+  $ua->requests_redirectable(undef);
+  $ua->timeout(5);
+  $ua->agent($agent);
+
+  my $url = "https://${host}/";
+  my $res = $ua->head($url);
+  print Dumper($res);
+
+  return {
+    hsts   => ($res->header('strict-transport-security') || ''),
+    csp    => ($res->header('content-security-policy') || ''),
+    server => $res->header('server'),
+    xframe => ($res->header('x-frame-options') || ''),
   };
 }
