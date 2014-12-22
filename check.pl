@@ -76,23 +76,41 @@ sub check {
   my $req = HTTP::Request->new('GET',"http://${host}/");
   my $res = $ua->request($req);
   my $res_code = $res->code();
-  my ($redirect, $non_ssl_code);
+  my $no_ssl_hash = {
+    redirect_ssl  => '',
+    redirect_code => 0,
+    redirect_to   => '',
+    clear_access  => 'yes',
+  };
   print "  redirection:";
   if ($res_code == 302 || $res_code == 301) {
-    print GREEN,BOLD " OK\n", RESET;
-    $redirect = 'yes';
+    
+    $no_ssl_hash->{'redirect_to'} = $res->header('location');
+    $no_ssl_hash->{'redirect_code'} = $res_code;
+
+    if ($res->header('location') =~ /https:\/\/${host}\//) {
+      print GREEN,BOLD " OK\n", RESET;
+      $no_ssl_hash->{'redirect_ssl'} = 'yes';
+    } else {
+      print RED,BOLD " NOK", RESET;
+      $no_ssl_hash->{'redirect_ssl'} = 'no';
+    }
+  } elsif ($res_code == 500) {
+    print RED,BOLD " NO clear access", RESET;
+    print " (timeout)\n";
+    $no_ssl_hash->{'clear_access'} = 'no';
   } else {
     print RED,BOLD " NOK", RESET;
     print " (${res_code})\n";
-    $redirect = 'no';
-    $non_ssl_code = $res_code;
+    $no_ssl_hash->{'redirect_ssl'} = 'no';
+    $no_ssl_hash->{'redirect_code'} = $res_code;
   }
 
-  check_ssl($host, $redirect, $non_ssl_code);
+  check_ssl($host, $no_ssl_hash);
 }
 
 sub check_ssl {
-  my ($host, $redirect, $non_ssl_code) = @_;
+  my ($host, $no_ssl_hash) = @_;
 
   my @ssl_versions = (
     'SSLv3',
@@ -291,13 +309,11 @@ sub check_ssl {
     default_cipher => $default_cipher,
     host           => $host,
     ips            => $ips,
-    non_ssl_code   => $non_ssl_code,
+    no_ssl         => $no_ssl_hash,
     protocols      => $accepted_protocols,
-    redirect       => $redirect,
     server_info    => $check_server,
     ssl_cves       => {
       'heartbleed' => {code => $heart_code, msg => $heart_msg},
-      'poodle'     => '',
     },
   };
 
