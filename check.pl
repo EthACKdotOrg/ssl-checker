@@ -32,7 +32,7 @@ my @useragents = (
   'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/4.0; InfoPath.2; SV1; .NET CLR 2.0.50727; WOW64)',
 );
 
-open my $fh,  '<', $file || die $!;
+open my $fh,  '<', $file or die $!;
 
 my ($front, $ebanking);
 my @output = ();
@@ -55,7 +55,7 @@ while(my $row = $csv->getline($fh)) {
 }
 close $file;
 
-open FH, '>output.json' || die $!;
+open FH, '>output.json' or die $!;
 my $json = JSON->new;
 print FH $json->pretty->encode(\@output);
 close FH;
@@ -178,7 +178,7 @@ sub check_ssl {
       } else {
         print GREEN " success", RESET;
       }
-      push  $accepted_protocols, $ssl_version ;
+      push @{$accepted_protocols}, $ssl_version ;
       print " (with ".$default_cipher.")\n";
 
       $good_ciphers->{$ssl_version} = [];
@@ -201,10 +201,10 @@ sub check_ssl {
           if ($sock && $sock->opened) {
             if ($level eq 'weak') {
               print RED "    ${cipher} OK (weak)\n", RESET;
-              push  $weak_ciphers->{$ssl_version}, $cipher;
+              push  @{$weak_ciphers->{$ssl_version}}, $cipher;
             } else {
               print GREEN "    ${cipher} OK (good)\n", RESET;
-              push  $good_ciphers->{$ssl_version}, $cipher;
+              push  @{$good_ciphers->{$ssl_version}}, $cipher;
             }
             $sock->close();
           }
