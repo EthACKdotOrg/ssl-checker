@@ -1,14 +1,19 @@
 [
    {
-      "default_cipher" : "ECDHE-RSA-AES128-SHA256",
-      "non_ssl_code" : null,
+      "ssl_cves" : {
+         "heartbleed" : {
+            "code" : 1,
+            "msg" : "probably NOT vulnerable (2)"
+         },
+         "poodle" : ""
+      },
       "certificate" : {
-         "sign_algo" : "sha256WithRSAEncryption",
-         "not_after" : "2015-01-18T11:16:59Z",
+         "subject" : "/C=CH/ST=Vaud/L=La Tour-de-Peilz/O=C\\xE9dric Jeanneret/CN=*.swisstengu.ch/emailAddress=hostmaster@swisstengu.ch",
+         "match_top" : "Not for subdomains",
          "alt_names" : [
-            "2",
+            2,
             "*.swisstengu.ch",
-            "2",
+            2,
             "swisstengu.ch",
             2,
             "internux.ch",
@@ -27,33 +32,29 @@
             2,
             "*.tengu.ch"
          ],
-         "match_top" : "yes",
-         "subject" : "/C=CH/ST=Vaud/L=La Tour-de-Peilz/O=C\\xE9dric Jeanneret/CN=*.swisstengu.ch/emailAddress=hostmaster@swisstengu.ch",
-         "issuer" : "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
+         "sign_algo" : "sha256WithRSAEncryption",
+         "not_after" : "2015-01-18T11:16:59Z",
+         "key_algo" : "rsaEncryption",
          "not_before" : "2013-01-18T06:21:16Z",
-         "key_algo" : "rsaEncryption"
+         "issuer" : "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA"
       },
-      "host" : "www.swisstengu.ch",
+      "non_ssl_code" : null,
+      "server_info" : {
+         "csp" : "",
+         "server" : "nginx/1.2.1",
+         "xframe" : "SAMEORIGIN, SAMEORIGIN",
+         "hsts" : "max-age=31536000; includeSubDomains; preload"
+      },
+      "protocols" : [
+         "TLSv1",
+         "TLSv11",
+         "TLSv12"
+      ],
       "ciphers" : {
          "good" : {
             "TLSv12" : [
                {
-                  "ECDHE-RSA-AES256-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-GCM-SHA384" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES128-SHA256" : "pfs"
-               },
-               {
                   "DHE-RSA-AES256-GCM-SHA384" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES256-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES128-GCM-SHA256" : "pfs"
                },
                {
                   "ECDHE-RSA-AES128-SHA256" : "pfs"
@@ -62,41 +63,56 @@
                   "DHE-RSA-AES128-SHA" : "pfs"
                },
                {
-                  "DHE-RSA-AES256-SHA256" : "pfs"
+                  "DHE-RSA-AES128-GCM-SHA256" : "pfs"
                },
                {
-                  "ECDHE-RSA-AES128-SHA" : "pfs"
+                  "ECDHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES256-SHA256" : "pfs"
                },
                {
                   "ECDHE-RSA-AES256-SHA384" : "pfs"
                },
                {
-                  "DHE-RSA-AES128-GCM-SHA256" : "pfs"
+                  "DHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES128-SHA256" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES128-GCM-SHA256" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES128-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES256-GCM-SHA384" : "pfs"
                }
             ],
-            "TLSv1" : [
+            "TLSv11" : [
+               {
+                  "DHE-RSA-AES128-SHA" : "pfs"
+               },
                {
                   "ECDHE-RSA-AES256-SHA" : "pfs"
                },
                {
                   "DHE-RSA-AES256-SHA" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES128-SHA" : "pfs"
                },
                {
                   "ECDHE-RSA-AES128-SHA" : "pfs"
                }
             ],
-            "TLSv11" : [
+            "TLSv1" : [
+               {
+                  "DHE-RSA-AES128-SHA" : "pfs"
+               },
                {
                   "ECDHE-RSA-AES256-SHA" : "pfs"
                },
                {
                   "DHE-RSA-AES256-SHA" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES128-SHA" : "pfs"
                },
                {
                   "ECDHE-RSA-AES128-SHA" : "pfs"
@@ -122,10 +138,84 @@
          }
       },
       "redirect" : "yes",
+      "host" : "ethack.org",
+      "default_cipher" : "ECDHE-RSA-AES128-SHA256",
+      "ips" : {
+         "46.4.46.73" : {
+            "nic-hdl" : "HOAC1-RIPE",
+            "remarks" : "*************************************************",
+            "org-name" : "Hetzner Online AG",
+            "descr" : "HETZNER-RZ-FKS-BLK3",
+            "route" : "46.4.0.0/16",
+            "mnt-lower" : "HOS-GUN",
+            "source" : "RIPE # Filtered",
+            "organisation" : "ORG-HOA1-RIPE",
+            "mnt-ref" : "RIPE-NCC-HM-MNT",
+            "phone" : "+49 9831 610061",
+            "tech-c" : "SK8441-RIPE",
+            "country" : "DE",
+            "admin-c" : "SK8441-RIPE",
+            "origin" : "AS24940",
+            "fax-no" : "+49 9831 610062",
+            "inetnum" : "46.4.46.64 - 46.4.46.95",
+            "address" : "GERMANY",
+            "status" : "ASSIGNED PA",
+            "netname" : "HETZNER-RZ13",
+            "org-type" : "LIR",
+            "abuse-mailbox" : "abuse@hetzner.de",
+            "org" : "ORG-HOA1-RIPE",
+            "mnt-by" : "RIPE-NCC-HM-MNT",
+            "mnt-routes" : "HOS-GUN",
+            "abuse-c" : "HOAC1-RIPE",
+            "role" : "Hetzner Online AG - Contact Role",
+            "% Note" : "this output has been filtered."
+         }
+      }
+   },
+   {
+      "non_ssl_code" : null,
+      "ssl_cves" : {
+         "poodle" : "",
+         "heartbleed" : {
+            "code" : 1,
+            "msg" : "probably NOT vulnerable (2)"
+         }
+      },
+      "certificate" : {
+         "not_after" : "2015-01-18T11:16:59Z",
+         "sign_algo" : "sha256WithRSAEncryption",
+         "match_top" : "Not for subdomains",
+         "alt_names" : [
+            2,
+            "*.swisstengu.ch",
+            2,
+            "swisstengu.ch",
+            2,
+            "internux.ch",
+            2,
+            "*.internux.ch",
+            2,
+            "itnux.ch",
+            2,
+            "*.itnux.ch",
+            2,
+            "phoenix818.ch",
+            2,
+            "*.phoenix818.ch",
+            2,
+            "tengu.ch",
+            2,
+            "*.tengu.ch"
+         ],
+         "subject" : "/C=CH/ST=Vaud/L=La Tour-de-Peilz/O=C\\xE9dric Jeanneret/CN=*.swisstengu.ch/emailAddress=hostmaster@swisstengu.ch",
+         "issuer" : "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
+         "not_before" : "2013-01-18T06:21:16Z",
+         "key_algo" : "rsaEncryption"
+      },
       "server_info" : {
-         "xframe" : "SAMEORIGIN, SAMEORIGIN",
-         "hsts" : "max-age=31536000; includeSubDomains; preload",
-         "csp" : "default-src https:; script-src 'self' https://piwik.tengu.ch https: 'unsafe-inline' 'unsafe-eval'; font-src 'self' https://themes.googleusercontent.com; style-src 'self' https://fonts.googleapis.com https: 'unsafe-inline'",
+         "hsts" : "max-age=31536000",
+         "xframe" : "",
+         "csp" : "",
          "server" : "nginx/1.2.1"
       },
       "protocols" : [
@@ -133,144 +223,11 @@
          "TLSv11",
          "TLSv12"
       ],
-      "ips" : {
-         "46.4.46.73" : {
-            "mnt-lower" : "HOS-GUN",
-            "address" : "GERMANY",
-            "country" : "DE",
-            "netname" : "HETZNER-RZ13",
-            "remarks" : "*************************************************",
-            "org-type" : "LIR",
-            "org" : "ORG-HOA1-RIPE",
-            "phone" : "+49 9831 610061",
-            "source" : "RIPE # Filtered",
-            "organisation" : "ORG-HOA1-RIPE",
-            "admin-c" : "SK8441-RIPE",
-            "mnt-ref" : "RIPE-NCC-HM-MNT",
-            "nic-hdl" : "HOAC1-RIPE",
-            "fax-no" : "+49 9831 610062",
-            "mnt-by" : "RIPE-NCC-HM-MNT",
-            "descr" : "HETZNER-RZ-FKS-BLK3",
-            "abuse-mailbox" : "abuse@hetzner.de",
-            "status" : "ASSIGNED PA",
-            "role" : "Hetzner Online AG - Contact Role",
-            "% Note" : "this output has been filtered.",
-            "inetnum" : "46.4.46.64 - 46.4.46.95",
-            "org-name" : "Hetzner Online AG",
-            "origin" : "AS24940",
-            "mnt-routes" : "HOS-GUN",
-            "abuse-c" : "HOAC1-RIPE",
-            "tech-c" : "SK8441-RIPE",
-            "route" : "46.4.0.0/16"
-         }
-      }
-   },
-   {
-      "default_cipher" : "ECDHE-RSA-AES128-SHA256",
-      "non_ssl_code" : null,
-      "certificate" : {
-         "key_algo" : "rsaEncryption",
-         "not_before" : "2013-01-18T06:21:16Z",
-         "issuer" : "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
-         "subject" : "/C=CH/ST=Vaud/L=La Tour-de-Peilz/O=C\\xE9dric Jeanneret/CN=*.swisstengu.ch/emailAddress=hostmaster@swisstengu.ch",
-         "match_top" : "Not for subdomains",
-         "alt_names" : [
-            2,
-            "*.swisstengu.ch",
-            2,
-            "swisstengu.ch",
-            2,
-            "internux.ch",
-            2,
-            "*.internux.ch",
-            2,
-            "itnux.ch",
-            2,
-            "*.itnux.ch",
-            2,
-            "phoenix818.ch",
-            2,
-            "*.phoenix818.ch",
-            2,
-            "tengu.ch",
-            2,
-            "*.tengu.ch"
-         ],
-         "not_after" : "2015-01-18T11:16:59Z",
-         "sign_algo" : "sha256WithRSAEncryption"
-      },
+      "host" : "pad.ethack.org",
+      "redirect" : "yes",
       "ciphers" : {
-         "weak" : {
-            "TLSv12" : [
-               {
-                  "SHA1" : "no_pfs"
-               }
-            ],
-            "TLSv1" : [
-               {
-                  "SHA1" : "no_pfs"
-               }
-            ],
-            "TLSv11" : [
-               {
-                  "SHA1" : "no_pfs"
-               }
-            ]
-         },
          "good" : {
-            "TLSv1" : [
-               {
-                  "DHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-SHA" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES256-SHA" : "pfs"
-               }
-            ],
-            "TLSv11" : [
-               {
-                  "DHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-SHA" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES256-SHA" : "pfs"
-               }
-            ],
             "TLSv12" : [
-               {
-                  "DHE-RSA-AES256-SHA256" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES128-SHA256" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES128-GCM-SHA256" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-SHA384" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-GCM-SHA384" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-SHA" : "pfs"
-               },
                {
                   "ECDHE-RSA-AES128-GCM-SHA256" : "pfs"
                },
@@ -278,71 +235,161 @@
                   "DHE-RSA-AES128-SHA256" : "pfs"
                },
                {
+                  "DHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES256-SHA384" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES256-SHA256" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES128-GCM-SHA256" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES128-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES128-SHA256" : "pfs"
+               },
+               {
                   "DHE-RSA-AES256-GCM-SHA384" : "pfs"
                },
                {
+                  "ECDHE-RSA-AES256-GCM-SHA384" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES128-SHA" : "pfs"
+               }
+            ],
+            "TLSv11" : [
+               {
                   "DHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES128-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES128-SHA" : "pfs"
+               }
+            ],
+            "TLSv1" : [
+               {
+                  "DHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES128-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES128-SHA" : "pfs"
+               }
+            ]
+         },
+         "weak" : {
+            "TLSv1" : [
+               {
+                  "SHA1" : "no_pfs"
+               }
+            ],
+            "TLSv11" : [
+               {
+                  "SHA1" : "no_pfs"
+               }
+            ],
+            "TLSv12" : [
+               {
+                  "SHA1" : "no_pfs"
                }
             ]
          }
       },
-      "host" : "ethack.org",
-      "protocols" : [
-         "TLSv1",
-         "TLSv11",
-         "TLSv12"
-      ],
-      "server_info" : {
-         "csp" : "",
-         "hsts" : "max-age=31536000; includeSubDomains; preload",
-         "server" : "nginx/1.2.1",
-         "xframe" : "SAMEORIGIN, SAMEORIGIN"
-      },
       "ips" : {
          "46.4.46.73" : {
-            "inetnum" : "46.4.46.64 - 46.4.46.95",
-            "% Note" : "this output has been filtered.",
-            "org-name" : "Hetzner Online AG",
-            "mnt-by" : "RIPE-NCC-HM-MNT",
             "descr" : "HETZNER-RZ-FKS-BLK3",
-            "abuse-mailbox" : "abuse@hetzner.de",
-            "status" : "ASSIGNED PA",
-            "role" : "Hetzner Online AG - Contact Role",
-            "abuse-c" : "HOAC1-RIPE",
-            "tech-c" : "SK8441-RIPE",
-            "route" : "46.4.0.0/16",
-            "origin" : "AS24940",
-            "mnt-routes" : "HOS-GUN",
-            "remarks" : "*************************************************",
-            "org-type" : "LIR",
-            "phone" : "+49 9831 610061",
-            "org" : "ORG-HOA1-RIPE",
-            "organisation" : "ORG-HOA1-RIPE",
-            "admin-c" : "SK8441-RIPE",
             "source" : "RIPE # Filtered",
+            "route" : "46.4.0.0/16",
             "mnt-lower" : "HOS-GUN",
-            "address" : "GERMANY",
-            "country" : "DE",
-            "netname" : "HETZNER-RZ13",
-            "mnt-ref" : "RIPE-NCC-HM-MNT",
             "nic-hdl" : "HOAC1-RIPE",
-            "fax-no" : "+49 9831 610062"
+            "remarks" : "*************************************************",
+            "org-name" : "Hetzner Online AG",
+            "admin-c" : "SK8441-RIPE",
+            "country" : "DE",
+            "origin" : "AS24940",
+            "organisation" : "ORG-HOA1-RIPE",
+            "mnt-ref" : "RIPE-NCC-HM-MNT",
+            "phone" : "+49 9831 610061",
+            "tech-c" : "SK8441-RIPE",
+            "status" : "ASSIGNED PA",
+            "org-type" : "LIR",
+            "netname" : "HETZNER-RZ13",
+            "fax-no" : "+49 9831 610062",
+            "inetnum" : "46.4.46.64 - 46.4.46.95",
+            "address" : "GERMANY",
+            "mnt-routes" : "HOS-GUN",
+            "abuse-c" : "HOAC1-RIPE",
+            "% Note" : "this output has been filtered.",
+            "role" : "Hetzner Online AG - Contact Role",
+            "abuse-mailbox" : "abuse@hetzner.de",
+            "mnt-by" : "RIPE-NCC-HM-MNT",
+            "org" : "ORG-HOA1-RIPE"
          }
       },
-      "redirect" : "yes"
+      "default_cipher" : "ECDHE-RSA-AES128-SHA256"
    },
    {
+      "default_cipher" : "ECDHE-RSA-AES128-SHA256",
+      "ips" : {
+         "46.4.46.73" : {
+            "mnt-ref" : "RIPE-NCC-HM-MNT",
+            "tech-c" : "SK8441-RIPE",
+            "phone" : "+49 9831 610061",
+            "organisation" : "ORG-HOA1-RIPE",
+            "admin-c" : "SK8441-RIPE",
+            "country" : "DE",
+            "origin" : "AS24940",
+            "remarks" : "*************************************************",
+            "org-name" : "Hetzner Online AG",
+            "nic-hdl" : "HOAC1-RIPE",
+            "descr" : "HETZNER-RZ-FKS-BLK3",
+            "mnt-lower" : "HOS-GUN",
+            "route" : "46.4.0.0/16",
+            "source" : "RIPE # Filtered",
+            "org" : "ORG-HOA1-RIPE",
+            "mnt-by" : "RIPE-NCC-HM-MNT",
+            "abuse-mailbox" : "abuse@hetzner.de",
+            "% Note" : "this output has been filtered.",
+            "role" : "Hetzner Online AG - Contact Role",
+            "mnt-routes" : "HOS-GUN",
+            "abuse-c" : "HOAC1-RIPE",
+            "address" : "GERMANY",
+            "fax-no" : "+49 9831 610062",
+            "inetnum" : "46.4.46.64 - 46.4.46.95",
+            "netname" : "HETZNER-RZ13",
+            "org-type" : "LIR",
+            "status" : "ASSIGNED PA"
+         }
+      },
       "certificate" : {
-         "issuer" : "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
          "not_before" : "2013-01-18T06:21:16Z",
+         "issuer" : "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
          "key_algo" : "rsaEncryption",
          "sign_algo" : "sha256WithRSAEncryption",
          "not_after" : "2015-01-18T11:16:59Z",
-         "match_top" : "Not for subdomains",
+         "subject" : "/C=CH/ST=Vaud/L=La Tour-de-Peilz/O=C\\xE9dric Jeanneret/CN=*.swisstengu.ch/emailAddress=hostmaster@swisstengu.ch",
+         "match_top" : "yes",
          "alt_names" : [
-            2,
+            "2",
             "*.swisstengu.ch",
-            2,
+            "2",
             "swisstengu.ch",
             2,
             "internux.ch",
@@ -360,57 +407,31 @@
             "tengu.ch",
             2,
             "*.tengu.ch"
-         ],
-         "subject" : "/C=CH/ST=Vaud/L=La Tour-de-Peilz/O=C\\xE9dric Jeanneret/CN=*.swisstengu.ch/emailAddress=hostmaster@swisstengu.ch"
+         ]
       },
-      "default_cipher" : "ECDHE-RSA-AES128-SHA256",
+      "ssl_cves" : {
+         "poodle" : "",
+         "heartbleed" : {
+            "code" : 1,
+            "msg" : "probably NOT vulnerable (2)"
+         }
+      },
       "non_ssl_code" : null,
       "server_info" : {
-         "xframe" : "",
+         "hsts" : "max-age=31536000; includeSubDomains; preload",
+         "xframe" : "SAMEORIGIN, SAMEORIGIN",
          "server" : "nginx/1.2.1",
-         "csp" : "",
-         "hsts" : "max-age=31536000"
-      },
-      "ips" : {
-         "46.4.46.73" : {
-            "% Note" : "this output has been filtered.",
-            "inetnum" : "46.4.46.64 - 46.4.46.95",
-            "org-name" : "Hetzner Online AG",
-            "descr" : "HETZNER-RZ-FKS-BLK3",
-            "mnt-by" : "RIPE-NCC-HM-MNT",
-            "abuse-mailbox" : "abuse@hetzner.de",
-            "status" : "ASSIGNED PA",
-            "role" : "Hetzner Online AG - Contact Role",
-            "abuse-c" : "HOAC1-RIPE",
-            "tech-c" : "SK8441-RIPE",
-            "route" : "46.4.0.0/16",
-            "origin" : "AS24940",
-            "mnt-routes" : "HOS-GUN",
-            "org-type" : "LIR",
-            "remarks" : "*************************************************",
-            "phone" : "+49 9831 610061",
-            "org" : "ORG-HOA1-RIPE",
-            "organisation" : "ORG-HOA1-RIPE",
-            "admin-c" : "SK8441-RIPE",
-            "source" : "RIPE # Filtered",
-            "mnt-lower" : "HOS-GUN",
-            "address" : "GERMANY",
-            "country" : "DE",
-            "netname" : "HETZNER-RZ13",
-            "mnt-ref" : "RIPE-NCC-HM-MNT",
-            "nic-hdl" : "HOAC1-RIPE",
-            "fax-no" : "+49 9831 610062"
-         }
+         "csp" : "default-src https:; script-src 'self' https://piwik.tengu.ch https: 'unsafe-inline' 'unsafe-eval'; font-src 'self' https://themes.googleusercontent.com; style-src 'self' https://fonts.googleapis.com https: 'unsafe-inline'"
       },
       "protocols" : [
          "TLSv1",
          "TLSv11",
          "TLSv12"
       ],
-      "redirect" : "yes",
+      "host" : "www.swisstengu.ch",
       "ciphers" : {
          "weak" : {
-            "TLSv12" : [
+            "TLSv1" : [
                {
                   "SHA1" : "no_pfs"
                }
@@ -420,81 +441,81 @@
                   "SHA1" : "no_pfs"
                }
             ],
-            "TLSv1" : [
+            "TLSv12" : [
                {
                   "SHA1" : "no_pfs"
                }
             ]
          },
          "good" : {
+            "TLSv11" : [
+               {
+                  "ECDHE-RSA-AES128-SHA" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES128-SHA" : "pfs"
+               }
+            ],
+            "TLSv1" : [
+               {
+                  "ECDHE-RSA-AES128-SHA" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES128-SHA" : "pfs"
+               }
+            ],
             "TLSv12" : [
+               {
+                  "ECDHE-RSA-AES256-GCM-SHA384" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES128-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES128-SHA256" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES256-GCM-SHA384" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES128-SHA256" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES128-GCM-SHA256" : "pfs"
+               },
+               {
+                  "DHE-RSA-AES256-SHA" : "pfs"
+               },
+               {
+                  "ECDHE-RSA-AES256-SHA384" : "pfs"
+               },
                {
                   "DHE-RSA-AES256-SHA256" : "pfs"
                },
                {
-                  "ECDHE-RSA-AES128-SHA256" : "pfs"
+                  "ECDHE-RSA-AES256-SHA" : "pfs"
                },
                {
                   "DHE-RSA-AES128-SHA" : "pfs"
                },
                {
                   "DHE-RSA-AES128-GCM-SHA256" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-SHA384" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-GCM-SHA384" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES128-GCM-SHA256" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES128-SHA256" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES256-GCM-SHA384" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES256-SHA" : "pfs"
-               }
-            ],
-            "TLSv11" : [
-               {
-                  "DHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-SHA" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES256-SHA" : "pfs"
-               }
-            ],
-            "TLSv1" : [
-               {
-                  "DHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES128-SHA" : "pfs"
-               },
-               {
-                  "ECDHE-RSA-AES256-SHA" : "pfs"
-               },
-               {
-                  "DHE-RSA-AES256-SHA" : "pfs"
                }
             ]
          }
       },
-      "host" : "pad.ethack.org"
+      "redirect" : "yes"
    }
 ]
