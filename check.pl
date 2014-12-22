@@ -365,9 +365,9 @@ sub check_server {
   my $res = $ua->head($url);
 
   return {
-    hsts   => ($res->header('strict-transport-security') || ''),
-    csp    => ($res->header('content-security-policy') || ''),
-    server => $res->header('server'),
-    xframe => ($res->header('x-frame-options') || ''),
+    hsts   => ($res->header('strict-transport-security') || 'not set'),
+    csp    => ($res->header('content-security-policy') || 'not set'),
+    server => ($res->header('server') || 'unknown'),
+    xframe => ($res->header('x-frame-options') || 'not set'),
   };
 }
