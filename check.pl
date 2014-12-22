@@ -106,7 +106,6 @@ sub check_ssl {
       'ADH',
       'AECDH-NULL-SHA',
       'aNULL',
-      'CAMELLIA',
       'DES',
       'EDH-RSA-DES-CBC-SHA',
       'eNULL',
@@ -125,6 +124,7 @@ sub check_ssl {
     ],
     good => [
       'AES',
+      'CAMELLIA',
       'EECDH',
       'EDH-aRSA',
       'HIGH',
