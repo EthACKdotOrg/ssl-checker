@@ -38,30 +38,42 @@ sub check_heartbleed {
     0xC0,0x29, 0xC0,0x25, 0x00,0x9C, 0x00,0x3C,
   );
 
+  my $ssls = {
+    'sslv3'  => 0x300,
+    'tlsv1'  => 0x301,
+    'tlsv11' => 0x302,
+    'tlsv12' => 0x303,
+  };
+
+
   my @ciphers = (( $ssl_version eq 'tls12' ? @tls12_ciphers : ()), @ssl3_ciphers );
-  my ($cl,$use_version) = _connect( $host, $ssl_version, \@ciphers );
+  my ($cl,$use_version) = _connect( $host, $ssls->{$ssl_version}, \@ciphers );
 
-  my $hb = pack("Cnn/a*",0x18,$use_version,
-    pack("Cn",1,0x4000));
+  if ($use_version) {
+    my $hb = pack("Cnn/a*",0x18,$use_version,
+      pack("Cn",1,0x4000));
 
-  for (1..2) {
-    print $cl substr($hb,0,1);
-    print $cl substr($hb,1);
-  }
+    for (1..2) {
+      print $cl substr($hb,0,1);
+      print $cl substr($hb,1);
+    }
 
-  my $err;
-  if ( my ($type,$ver,$buf) = _readframe($cl,\$err,1)) {
-    if ( $type == 21 ) {
-      return (1, 'probably NOT vulnerablei (1)');
-    } elsif ( $type != 24 ) {
-      return (99, 'unknown, unexpected answer');
-    } elsif ( length($buf)>3 ) {
-      return (2, 'vulnerable');
+    my $err;
+    if ( my ($type,$ver,$buf) = _readframe($cl,\$err,1)) {
+      if ( $type == 21 ) {
+        return (1, 'probably NOT vulnerablei (1)');
+      } elsif ( $type != 24 ) {
+        return (99, 'unknown, unexpected answer');
+      } elsif ( length($buf)>3 ) {
+        return (2, 'vulnerable');
+      } else {
+        return (0, 'NOT vulnerable');
+      }
     } else {
-      return (0, 'NOT vulnerable');
+      return (1, 'probably NOT vulnerable (2)');
     }
   } else {
-    return (1, 'probably NOT vulnerable (2)');
+    return (99, 'unknown, unexpected hello answer');
   }
 
 }
@@ -71,13 +83,6 @@ sub check_heartbleed {
 sub _connect {
   my ($host, $ssl_version, $ciphers) = @_;
 
-  my $ssls = {
-    'sslv3' => 0x300,
-    'tlsv1'  => 0x301,
-    'tlsv11' => 0x302,
-    'tlsv12' => 0x303,
-  };
-
   my $cl = IO::Socket::IP->new(
     PeerHost => $host,
     PeerPort => "https",
@@ -86,20 +91,27 @@ sub _connect {
   # disable NAGLE to send heartbeat with multiple small packets
   setsockopt($cl,6,1,pack("l",1));
 
+  my $ext = '';
+  $ext .= pack('nn/a*', 0x00,   # server_name extension + length
+    pack('n/a*',              # server_name list length
+      pack('Cn/a*',0,$host)  # type host_name(0) + length/server_name
+    ));
+
+
   # built and send ssl client hello
   my $hello_data = pack("nNn14Cn/a*C/a*n/a*",
-    $ssls->{$ssl_version},
+    $ssl_version,
     time(),
     ( map { rand(0x10000) } (1..14)),
     0, # session-id length
     pack("C*",@$ciphers),
     "\0", # compression null
-    '',
+    $ext,
   );
 
   $hello_data = substr(pack("N/a*",$hello_data),1); # 3byte length
   print $cl pack(
-    "Cnn/a*",0x16,$ssls->{$ssl_version},  # type handshake, version, length
+    "Cnn/a*",0x16,$ssl_version,  # type handshake, version, length
     pack("Ca*",1,$hello_data),   # type client hello, data
   );
 
