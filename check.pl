@@ -6,7 +6,6 @@ use Data::Dumper;
 use Text::CSV;
 use LWP::UserAgent;
 use IO::Socket::SSL;
-use IO::Socket::SSL::Utils;
 use Net::SSLeay qw(get_https3);
 use Net::DNS;
 use Net::Whois::IP qw(whoisip_query);
@@ -14,7 +13,8 @@ use Term::ANSIColor qw(:constants);
 use JSON;
 use List::MoreUtils qw(first_index);
 
-use Net::Whois::IP qw(whoisip_query);
+use lib 'lib';
+use ssl::heartbleed qw(check_heartbleed);
 
 my $file = './urls';
 my $csv = Text::CSV->new();
@@ -174,9 +174,11 @@ sub check_ssl {
     $ciphers_list,
     $default_cipher,
     $hash,
+    $heart_code,
+    $heart_msg,
     $level,
     $pfs,
-  );
+  ) => '';
   my $accepted_protocols = [];
   my $good_ciphers = {};
   my $weak_ciphers = {};
@@ -217,6 +219,11 @@ sub check_ssl {
       push @{$accepted_protocols}, $ssl_version ;
       print " (with ".$default_cipher.")\n";
 
+      # heartbleed
+      print "  Checking Heartbleed…";
+      ($heart_code, $heart_msg) = check_heartbleed($host, lc($ssl_version) );
+      print " ${heart_msg}\n";
+
       $good_ciphers->{$ssl_version} = [];
       $weak_ciphers->{$ssl_version} = [];
       while (($level, $ciphers_list) = each(%ssl_ciphers)) {
@@ -232,7 +239,9 @@ sub check_ssl {
             # certificate verification
             SSL_verify_mode => SSL_VERIFY_PEER,
             SSL_ca_path     => '/etc/ssl/certs', # typical CA path on Linux
-            SSL_verifycn_scheme => 'http'
+            SSL_verifycn_scheme => 'http',
+
+            Timeout => 3,
           );
           if ($sock && $sock->opened) {
             if ($level eq 'weak') {
@@ -286,6 +295,10 @@ sub check_ssl {
     protocols      => $accepted_protocols,
     redirect       => $redirect,
     server_info    => $check_server,
+    ssl_cves       => {
+      'heartbleed' => {code => $heart_code, msg => $heart_msg},
+      'poodle'     => '',
+    },
   };
 
   return $hash;
