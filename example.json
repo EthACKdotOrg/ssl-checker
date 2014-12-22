@@ -1,0 +1,341 @@
+[
+   {
+      "host" : "www.swisstengu.ch",
+      "ips" : {
+         "46.4.46.73" : {
+            "% Note" : "this output has been filtered.",
+            "mnt-routes" : "HOS-GUN",
+            "status" : "ASSIGNED PA",
+            "admin-c" : "SK8441-RIPE",
+            "descr" : "HETZNER-RZ-FKS-BLK3",
+            "phone" : "+49 9831 610061",
+            "country" : "DE",
+            "fax-no" : "+49 9831 610062",
+            "mnt-by" : "RIPE-NCC-HM-MNT",
+            "org" : "ORG-HOA1-RIPE",
+            "mnt-lower" : "HOS-GUN",
+            "organisation" : "ORG-HOA1-RIPE",
+            "abuse-c" : "HOAC1-RIPE",
+            "mnt-ref" : "RIPE-NCC-HM-MNT",
+            "abuse-mailbox" : "abuse@hetzner.de",
+            "org-name" : "Hetzner Online AG",
+            "source" : "RIPE # Filtered",
+            "tech-c" : "SK8441-RIPE",
+            "nic-hdl" : "HOAC1-RIPE",
+            "remarks" : "*************************************************",
+            "inetnum" : "46.4.46.64 - 46.4.46.95",
+            "address" : "GERMANY",
+            "netname" : "HETZNER-RZ13",
+            "origin" : "AS24940",
+            "org-type" : "LIR",
+            "role" : "Hetzner Online AG - Contact Role",
+            "route" : "46.4.0.0/16"
+         }
+      },
+      "non_ssl_code" : null,
+      "redirect" : "yes",
+      "ciphers" : {
+         "weak" : {
+            "TLSv11" : [
+               "CAMELLIA",
+               "SHA"
+            ],
+            "TLSv1" : [
+               "CAMELLIA",
+               "SHA"
+            ],
+            "TLSv12" : [
+               "CAMELLIA",
+               "SHA"
+            ]
+         },
+         "good" : {
+            "TLSv12" : [
+               "AES",
+               "EECDH",
+               "HIGH",
+               "SHA256"
+            ],
+            "TLSv11" : [
+               "AES",
+               "EECDH",
+               "HIGH"
+            ],
+            "TLSv1" : [
+               "AES",
+               "EECDH",
+               "HIGH"
+            ]
+         }
+      },
+      "certificate" : {
+         "sign_algo" : "sha256WithRSAEncryption",
+         "not_after" : "2015-01-18T11:16:59Z",
+         "issuer" : "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
+         "alt_names" : [
+            "2",
+            "*.swisstengu.ch",
+            "2",
+            "swisstengu.ch",
+            2,
+            "internux.ch",
+            2,
+            "*.internux.ch",
+            2,
+            "itnux.ch",
+            2,
+            "*.itnux.ch",
+            2,
+            "phoenix818.ch",
+            2,
+            "*.phoenix818.ch",
+            2,
+            "tengu.ch",
+            2,
+            "*.tengu.ch"
+         ],
+         "match_top" : "yes",
+         "key_algo" : "rsaEncryption",
+         "subject" : "/C=CH/ST=Vaud/L=La Tour-de-Peilz/O=C\\xE9dric Jeanneret/CN=*.swisstengu.ch/emailAddress=hostmaster@swisstengu.ch",
+         "not_before" : "2013-01-18T06:21:16Z"
+      },
+      "protocols" : [
+         "TLSv1",
+         "TLSv11",
+         "TLSv12"
+      ],
+      "server_info" : {
+         "server" : "nginx/1.2.1",
+         "xframe" : "SAMEORIGIN, SAMEORIGIN",
+         "csp" : "default-src https:; script-src 'self' https://piwik.tengu.ch https: 'unsafe-inline' 'unsafe-eval'; font-src 'self' https://themes.googleusercontent.com; style-src 'self' https://fonts.googleapis.com https: 'unsafe-inline'",
+         "hsts" : "max-age=31536000; includeSubDomains; preload"
+      },
+      "default_cipher" : "ECDHE-RSA-AES128-SHA256"
+   },
+   {
+      "host" : "ethack.org",
+      "ips" : {
+         "46.4.46.73" : {
+            "mnt-lower" : "HOS-GUN",
+            "organisation" : "ORG-HOA1-RIPE",
+            "mnt-by" : "RIPE-NCC-HM-MNT",
+            "org" : "ORG-HOA1-RIPE",
+            "status" : "ASSIGNED PA",
+            "admin-c" : "SK8441-RIPE",
+            "fax-no" : "+49 9831 610062",
+            "country" : "DE",
+            "phone" : "+49 9831 610061",
+            "descr" : "HETZNER-RZ-FKS-BLK3",
+            "mnt-routes" : "HOS-GUN",
+            "% Note" : "this output has been filtered.",
+            "org-type" : "LIR",
+            "origin" : "AS24940",
+            "route" : "46.4.0.0/16",
+            "role" : "Hetzner Online AG - Contact Role",
+            "inetnum" : "46.4.46.64 - 46.4.46.95",
+            "remarks" : "*************************************************",
+            "address" : "GERMANY",
+            "nic-hdl" : "HOAC1-RIPE",
+            "netname" : "HETZNER-RZ13",
+            "tech-c" : "SK8441-RIPE",
+            "source" : "RIPE # Filtered",
+            "abuse-c" : "HOAC1-RIPE",
+            "org-name" : "Hetzner Online AG",
+            "abuse-mailbox" : "abuse@hetzner.de",
+            "mnt-ref" : "RIPE-NCC-HM-MNT"
+         }
+      },
+      "non_ssl_code" : null,
+      "redirect" : "yes",
+      "ciphers" : {
+         "good" : {
+            "TLSv12" : [
+               "AES",
+               "EECDH",
+               "HIGH",
+               "SHA256"
+            ],
+            "TLSv11" : [
+               "AES",
+               "EECDH",
+               "HIGH"
+            ],
+            "TLSv1" : [
+               "AES",
+               "EECDH",
+               "HIGH"
+            ]
+         },
+         "weak" : {
+            "TLSv12" : [
+               "CAMELLIA",
+               "SHA"
+            ],
+            "TLSv11" : [
+               "CAMELLIA",
+               "SHA"
+            ],
+            "TLSv1" : [
+               "CAMELLIA",
+               "SHA"
+            ]
+         }
+      },
+      "certificate" : {
+         "sign_algo" : "sha256WithRSAEncryption",
+         "not_before" : "2013-01-18T06:21:16Z",
+         "subject" : "/C=CH/ST=Vaud/L=La Tour-de-Peilz/O=C\\xE9dric Jeanneret/CN=*.swisstengu.ch/emailAddress=hostmaster@swisstengu.ch",
+         "key_algo" : "rsaEncryption",
+         "match_top" : "Not for subdomains",
+         "alt_names" : [
+            2,
+            "*.swisstengu.ch",
+            2,
+            "swisstengu.ch",
+            2,
+            "internux.ch",
+            2,
+            "*.internux.ch",
+            2,
+            "itnux.ch",
+            2,
+            "*.itnux.ch",
+            2,
+            "phoenix818.ch",
+            2,
+            "*.phoenix818.ch",
+            2,
+            "tengu.ch",
+            2,
+            "*.tengu.ch"
+         ],
+         "issuer" : "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
+         "not_after" : "2015-01-18T11:16:59Z"
+      },
+      "protocols" : [
+         "TLSv1",
+         "TLSv11",
+         "TLSv12"
+      ],
+      "server_info" : {
+         "server" : "nginx/1.2.1",
+         "xframe" : "SAMEORIGIN, SAMEORIGIN",
+         "csp" : "",
+         "hsts" : "max-age=31536000; includeSubDomains; preload"
+      },
+      "default_cipher" : "ECDHE-RSA-AES128-SHA256"
+   },
+   {
+      "redirect" : "yes",
+      "certificate" : {
+         "issuer" : "/C=IL/O=StartCom Ltd./OU=Secure Digital Certificate Signing/CN=StartCom Class 2 Primary Intermediate Server CA",
+         "alt_names" : [
+            2,
+            "*.swisstengu.ch",
+            2,
+            "swisstengu.ch",
+            2,
+            "internux.ch",
+            2,
+            "*.internux.ch",
+            2,
+            "itnux.ch",
+            2,
+            "*.itnux.ch",
+            2,
+            "phoenix818.ch",
+            2,
+            "*.phoenix818.ch",
+            2,
+            "tengu.ch",
+            2,
+            "*.tengu.ch"
+         ],
+         "not_after" : "2015-01-18T11:16:59Z",
+         "subject" : "/C=CH/ST=Vaud/L=La Tour-de-Peilz/O=C\\xE9dric Jeanneret/CN=*.swisstengu.ch/emailAddress=hostmaster@swisstengu.ch",
+         "not_before" : "2013-01-18T06:21:16Z",
+         "match_top" : "Not for subdomains",
+         "key_algo" : "rsaEncryption",
+         "sign_algo" : "sha256WithRSAEncryption"
+      },
+      "ciphers" : {
+         "weak" : {
+            "TLSv1" : [
+               "CAMELLIA",
+               "SHA"
+            ],
+            "TLSv11" : [
+               "CAMELLIA",
+               "SHA"
+            ],
+            "TLSv12" : [
+               "CAMELLIA",
+               "SHA"
+            ]
+         },
+         "good" : {
+            "TLSv11" : [
+               "AES",
+               "EECDH",
+               "HIGH"
+            ],
+            "TLSv1" : [
+               "AES",
+               "EECDH",
+               "HIGH"
+            ],
+            "TLSv12" : [
+               "AES",
+               "EECDH",
+               "HIGH",
+               "SHA256"
+            ]
+         }
+      },
+      "protocols" : [
+         "TLSv1",
+         "TLSv11",
+         "TLSv12"
+      ],
+      "host" : "pad.ethack.org",
+      "ips" : {
+         "46.4.46.73" : {
+            "% Note" : "this output has been filtered.",
+            "mnt-routes" : "HOS-GUN",
+            "admin-c" : "SK8441-RIPE",
+            "status" : "ASSIGNED PA",
+            "descr" : "HETZNER-RZ-FKS-BLK3",
+            "phone" : "+49 9831 610061",
+            "country" : "DE",
+            "fax-no" : "+49 9831 610062",
+            "mnt-by" : "RIPE-NCC-HM-MNT",
+            "org" : "ORG-HOA1-RIPE",
+            "organisation" : "ORG-HOA1-RIPE",
+            "mnt-lower" : "HOS-GUN",
+            "abuse-c" : "HOAC1-RIPE",
+            "mnt-ref" : "RIPE-NCC-HM-MNT",
+            "org-name" : "Hetzner Online AG",
+            "abuse-mailbox" : "abuse@hetzner.de",
+            "source" : "RIPE # Filtered",
+            "tech-c" : "SK8441-RIPE",
+            "nic-hdl" : "HOAC1-RIPE",
+            "inetnum" : "46.4.46.64 - 46.4.46.95",
+            "remarks" : "*************************************************",
+            "address" : "GERMANY",
+            "netname" : "HETZNER-RZ13",
+            "origin" : "AS24940",
+            "org-type" : "LIR",
+            "role" : "Hetzner Online AG - Contact Role",
+            "route" : "46.4.0.0/16"
+         }
+      },
+      "non_ssl_code" : null,
+      "default_cipher" : "ECDHE-RSA-AES128-SHA256",
+      "server_info" : {
+         "xframe" : "",
+         "server" : "nginx/1.2.1",
+         "csp" : "",
+         "hsts" : "max-age=31536000"
+      }
+   }
+]
