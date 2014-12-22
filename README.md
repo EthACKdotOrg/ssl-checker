@@ -34,6 +34,20 @@ just an indication.
 
 For now, it doesn't test for known CVE like POODLE, Heartbleed and so on.
 
+## Dependencies
+* [Data::Dumper](http://search.cpan.org/~smueller/Data-Dumper-2.154/Dumper.pm)
+* [IO::Socket::IP](http://search.cpan.org/~pevans/IO-Socket-IP-0.34/lib/IO/Socket/IP.pm)
+* [IO::Socket::SSL](http://search.cpan.org/~sullr/IO-Socket-SSL-2.008/lib/IO/Socket/SSL.pod)
+* [JSON](http://search.cpan.org/~makamaka/JSON-2.90/lib/JSON.pm)
+* [List::MoreUtils](http://search.cpan.org/~rehsack/List-MoreUtils-0.401/lib/List/MoreUtils.pm)
+* [LWP::UserAgent](http://search.cpan.org/~mschilli/libwww-perl-6.08/lib/LWP/UserAgent.pm)
+* [Net::DNS](http://search.cpan.org/~nlnetlabs/Net-DNS-0.81/lib/Net/DNS.pm)
+* [Net::SSLeay](http://search.cpan.org/~mikem/Net-SSLeay-1.66/lib/Net/SSLeay.pod)
+* [Net::Whois::IP](http://search.cpan.org/~bschmitz/Net-Whois-IP-1.15/IP.pm)
+* [Term::ANSIColor](http://search.cpan.org/~rra/Term-ANSIColor-4.03/lib/Term/ANSIColor.pm)
+* [Text::CSV](http://search.cpan.org/~makamaka/Text-CSV-1.32/lib/Text/CSV.pm)
+
+
 ## Contribution
 Feel free to fork this project and do some pull-request if you find errors or
 some new tests it might do.
