@@ -178,7 +178,7 @@ sub check_ssl {
     $heart_msg,
     $level,
     $pfs,
-  ) => '';
+  ) = '';
   my $accepted_protocols = [];
   my $good_ciphers = {};
   my $weak_ciphers = {};
