@@ -35,29 +35,34 @@ my @useragents = (
 open my $fh,  '<', $file or die $!;
 
 my ($front, $ebanking);
-my @output = ();
+my $output = {};
 
 while(my $row = $csv->getline($fh)) {
-  if (scalar @{$row} == 2) {
-    # test e-banking
-    $front    = $row->[0];
-    $ebanking = $row->[1];
-    push @output, check($front);
+  $front = $row->[0];
 
+  $output->{$front} = check($front, 'front');
+  $output->{$front}->{'role'} = 'front';
+  
+  if (scalar @{$row} == 2) {
+    $ebanking = $row->[1];
     if ($front ne $ebanking) {
-      push @output, check($ebanking);
+      $output->{$ebanking} = check($ebanking, 'ebanking', $front);
+      $output->{$ebanking}->{'role'} = 'ebanking';
+      $output->{$ebanking}->{'bank'} = $front;
+
+      $output->{$front}->{'ebanking'} = $ebanking;
+    } else {
+      $output->{$front}->{'ebanking'} = 'self';
     }
   } else {
-    # e-banking through dedicated app
-    $front  = $row->[0];
-    push @output, check($front);
+    $output->{$front}->{'ebanking'} = 'app';
   }
 }
 close $file;
 
 open FH, '>output.json' or die $!;
 my $json = JSON->new;
-print FH $json->pretty->encode(\@output);
+print FH $json->pretty->encode($output);
 close FH;
 
 sub check {
@@ -307,7 +312,6 @@ sub check_ssl {
       weak         => $weak_ciphers
     },
     default_cipher => $default_cipher,
-    host           => $host,
     ips            => $ips,
     no_ssl         => $no_ssl_hash,
     protocols      => $accepted_protocols,
