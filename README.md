@@ -17,6 +17,12 @@ The script will then loop on the file content and run a serie of checks.
 It will then create a JSON file with the whole output. You might follow the
 script run with live output.
 
+## Features
+* output as a JSON (hash, index is the URL)
+* link frontend to subdomain
+* oriented for ebanking checks first, but might be use for any other websites
+* update an existing JSON (add new entries)
+
 ## Checks
 * default cipher negociated with the server
 * accepted protocols (SSLv3, TLS1, TLS11 and TLS12)
