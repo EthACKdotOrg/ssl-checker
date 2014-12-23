@@ -56,6 +56,14 @@ while(my $row = $csv->getline($fh)) {
   } else {
     print "\n${front} already done\n";
   }
+
+  if (!-e "./jsons/${front}.json") {
+    my $agent = $useragents[rand @useragents];
+    system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${front}.json", $front);
+    if ($? != 0) {
+      system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${front}.json", "https://${front}");
+    }
+  }
   
   if (scalar @{$row} == 2) {
     $ebanking = $row->[1];
@@ -68,6 +76,13 @@ while(my $row = $csv->getline($fh)) {
         $json->{$front}->{'ebanking'} = $ebanking;
       } else {
         print "\n${ebanking} already done\n";
+      }
+      if (!-e "./jsons/${ebanking}.json") {
+        my $agent = $useragents[rand @useragents];
+        system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${ebanking}.json", $ebanking);
+      if ($? != 0) {
+        system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${ebanking}.json", "https://${ebanking}");
+      }
       }
     } else {
       $json->{$front}->{'ebanking'} = 'self';
