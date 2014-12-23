@@ -60,9 +60,12 @@ while(my $row = $csv->getline($fh)) {
   if (!-e "./jsons/${front}.json") {
     my $agent = $useragents[rand @useragents];
     system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${front}.json", $front);
-    if ($? != 0) {
+    open FHT, '<', "./jsons/${front}.json" or die $!;
+    if (scalar @{[<FHT>]} == 0) {
+      print "  Trying SSL…\n";
       system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${front}.json", "https://${front}");
     }
+    close FHT;
   }
   
   if (scalar @{$row} == 2) {
@@ -80,9 +83,12 @@ while(my $row = $csv->getline($fh)) {
       if (!-e "./jsons/${ebanking}.json") {
         my $agent = $useragents[rand @useragents];
         system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${ebanking}.json", $ebanking);
-      if ($? != 0) {
-        system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${ebanking}.json", "https://${ebanking}");
-      }
+        open FHT, '<', "./jsons/${ebanking}.json" or die $!;
+        if (scalar @{[<FHT>]} == 0) {
+          print "  Trying SSL…\n";
+          system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${ebanking}.json", "https://${ebanking}");
+        }
+        close FHT;
       }
     } else {
       $json->{$front}->{'ebanking'} = 'self';
