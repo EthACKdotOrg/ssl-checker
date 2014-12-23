@@ -53,6 +53,8 @@ while(my $row = $csv->getline($fh)) {
   if (!exists $json->{$front}) {
     $json->{$front} = check($front, 'front');
     $json->{$front}->{'role'} = 'front';
+  } else {
+    print "\n${front} already done\n";
   }
   
   if (scalar @{$row} == 2) {
@@ -64,6 +66,8 @@ while(my $row = $csv->getline($fh)) {
         $json->{$ebanking}->{'bank'} = $front;
 
         $json->{$front}->{'ebanking'} = $ebanking;
+      } else {
+        print "\n${ebanking} already done\n";
       }
     } else {
       $json->{$front}->{'ebanking'} = 'self';
@@ -110,7 +114,7 @@ sub check {
       print GREEN,BOLD " OK\n", RESET;
       $no_ssl_hash->{'redirect_ssl'} = 'yes';
     } else {
-      print RED,BOLD " NOK", RESET;
+      print RED,BOLD " NOK\n", RESET;
       $no_ssl_hash->{'redirect_ssl'} = 'no';
     }
   } elsif ($res_code == 500) {
