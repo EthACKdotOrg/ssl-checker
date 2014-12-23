@@ -32,37 +32,50 @@ my @useragents = (
   'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/4.0; InfoPath.2; SV1; .NET CLR 2.0.50727; WOW64)',
 );
 
-open my $fh,  '<', $file or die $!;
 
 my ($front, $ebanking);
-my $output = {};
+my $json_obj = JSON->new;
+my $json_output = 'output.json';
+my $json = {};
 
+if (-e $json_output) {
+  local $/;
+  open FH, '<', $json_output or die $!;
+  my $js = <FH>;
+  $json = $json_obj->decode($js);
+  close FH;
+}
+
+open my $fh,  '<', $file or die $!;
 while(my $row = $csv->getline($fh)) {
   $front = $row->[0];
 
-  $output->{$front} = check($front, 'front');
-  $output->{$front}->{'role'} = 'front';
+  if (!exists $json->{$front}) {
+    $json->{$front} = check($front, 'front');
+    $json->{$front}->{'role'} = 'front';
+  }
   
   if (scalar @{$row} == 2) {
     $ebanking = $row->[1];
     if ($front ne $ebanking) {
-      $output->{$ebanking} = check($ebanking, 'ebanking', $front);
-      $output->{$ebanking}->{'role'} = 'ebanking';
-      $output->{$ebanking}->{'bank'} = $front;
+      if (!exists $json->{$ebanking}) {
+        $json->{$ebanking} = check($ebanking, 'ebanking', $front);
+        $json->{$ebanking}->{'role'} = 'ebanking';
+        $json->{$ebanking}->{'bank'} = $front;
 
-      $output->{$front}->{'ebanking'} = $ebanking;
+        $json->{$front}->{'ebanking'} = $ebanking;
+      }
     } else {
-      $output->{$front}->{'ebanking'} = 'self';
+      $json->{$front}->{'ebanking'} = 'self';
     }
   } else {
-    $output->{$front}->{'ebanking'} = 'app';
+    $json->{$front}->{'ebanking'} = 'app';
   }
 }
 close $file;
 
-open FH, '>output.json' or die $!;
-my $json = JSON->new;
-print FH $json->pretty->encode($output);
+open FH, '>', $json_output or die $!;
+print FH $json_obj->pretty->encode($json);
 close FH;
 
 sub check {
