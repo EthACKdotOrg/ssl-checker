@@ -52,6 +52,7 @@ just an indication.
 * [Net::DNS](http://search.cpan.org/~nlnetlabs/Net-DNS-0.81/lib/Net/DNS.pm)
 * [Net::SSLeay](http://search.cpan.org/~mikem/Net-SSLeay-1.66/lib/Net/SSLeay.pod)
 * [Net::Whois::IP](http://search.cpan.org/~bschmitz/Net-Whois-IP-1.15/IP.pm)
+* [Perl::Version](http://search.cpan.org/~bdfoy/Perl-Version-1.013/lib/Perl/Version.pm)
 * [Term::ANSIColor](http://search.cpan.org/~rra/Term-ANSIColor-4.03/lib/Term/ANSIColor.pm)
 * [Text::CSV](http://search.cpan.org/~makamaka/Text-CSV-1.32/lib/Text/CSV.pm)
 
