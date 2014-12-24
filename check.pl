@@ -40,7 +40,7 @@ my ($front, $ebanking);
 my $json_obj = JSON->new;
 my $json_output = 'output.json';
 my $json = {};
-my $json_version = Perl::Version->new('1.0.0');
+my $json_version = Perl::Version->new('1.0.1');
 
 if (-e $json_output) {
   local $/;
@@ -292,10 +292,10 @@ sub check_ssl {
           if ($sock && $sock->opened) {
             if ($level eq 'weak') {
               print RED "    ${cipher} OK (weak, ${pfs})\n", RESET;
-              push  @{$weak_ciphers->{$ssl_version}}, {$cipher => $pfs};
+              push  @{$weak_ciphers->{$ssl_version}}, {cipher => $cipher, pfs => $pfs};
             } else {
               print GREEN "    ${cipher} OK (good, ${pfs})\n", RESET;
-              push  @{$good_ciphers->{$ssl_version}}, {$cipher => $pfs};
+              push  @{$good_ciphers->{$ssl_version}}, {cipher => $cipher, pfs => $pfs};
             }
             $sock->close();
           }
