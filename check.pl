@@ -12,6 +12,9 @@ use Net::Whois::IP qw(whoisip_query);
 use Term::ANSIColor qw(:constants);
 use JSON;
 use List::MoreUtils qw(first_index);
+use Perl::Version;
+use POSIX qw/strftime/;
+
 
 use lib 'lib';
 use ssl::heartbleed qw(check_heartbleed);
@@ -37,6 +40,7 @@ my ($front, $ebanking);
 my $json_obj = JSON->new;
 my $json_output = 'output.json';
 my $json = {};
+my $json_version = Perl::Version->new('1.0.0');
 
 if (-e $json_output) {
   local $/;
@@ -46,26 +50,26 @@ if (-e $json_output) {
   close FH;
 }
 
+if (!exists $json->{'version'} or $json_version > Perl::Version->new($json->{'version'})) {
+  print RED,BOLD "!!! Creating new JSON !!!\n\n", RESET;
+  $json = {};
+}
+
+my $date = strftime "%y-%m-%d", localtime;
+
+$json->{'version'} = $json_version->stringify();
+$json->{'date'} = $date;
+
 open my $fh,  '<', $file or die $!;
 while(my $row = $csv->getline($fh)) {
   $front = $row->[0];
+
 
   if (!exists $json->{$front}) {
     $json->{$front} = check($front, 'front');
     $json->{$front}->{'role'} = 'front';
   } else {
     print "\n${front} already done\n";
-  }
-
-  if (!-e "./jsons/${front}.json") {
-    my $agent = $useragents[rand @useragents];
-    system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${front}.json", $front);
-    open FHT, '<', "./jsons/${front}.json" or die $!;
-    if (scalar @{[<FHT>]} == 0) {
-      print "  Trying SSL…\n";
-      system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${front}.json", "https://${front}");
-    }
-    close FHT;
   }
   
   if (scalar @{$row} == 2) {
@@ -79,16 +83,6 @@ while(my $row = $csv->getline($fh)) {
         $json->{$front}->{'ebanking'} = $ebanking;
       } else {
         print "\n${ebanking} already done\n";
-      }
-      if (!-e "./jsons/${ebanking}.json") {
-        my $agent = $useragents[rand @useragents];
-        system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${ebanking}.json", $ebanking);
-        open FHT, '<', "./jsons/${ebanking}.json" or die $!;
-        if (scalar @{[<FHT>]} == 0) {
-          print "  Trying SSL…\n";
-          system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${ebanking}.json", "https://${ebanking}");
-        }
-        close FHT;
       }
     } else {
       $json->{$front}->{'ebanking'} = 'self';
@@ -125,28 +119,19 @@ sub check {
     redirect_to   => '',
     clear_access  => 'yes',
   };
-  print "  redirection:";
-  if ($res_code == 302 || $res_code == 301) {
-    
-    $no_ssl_hash->{'redirect_to'} = $res->header('location');
-    $no_ssl_hash->{'redirect_code'} = $res_code;
+  print "  HTTP access:";
 
-    if ($res->header('location') =~ /https:\/\/${host}\//) {
-      print GREEN,BOLD " OK\n", RESET;
-      $no_ssl_hash->{'redirect_ssl'} = 'yes';
-    } else {
-      print RED,BOLD " NOK\n", RESET;
-      $no_ssl_hash->{'redirect_ssl'} = 'no';
-    }
+  $no_ssl_hash->{'clear_access'} = 'yes';
+  
+  if ($res_code == 200) {
+    print RED,BOLD " OK\n", RESET;
   } elsif ($res_code == 500) {
-    print RED,BOLD " NO clear access", RESET;
+    print GREEN,BOLD " NO clear access", RESET;
     print " (timeout)\n";
     $no_ssl_hash->{'clear_access'} = 'no';
   } else {
-    print RED,BOLD " NOK", RESET;
+    print RED,BOLD " OK, with redirection(s)", RESET;
     print " (${res_code})\n";
-    $no_ssl_hash->{'redirect_ssl'} = 'no';
-    $no_ssl_hash->{'redirect_code'} = $res_code;
   }
 
   check_ssl($host, $no_ssl_hash);
@@ -412,20 +397,23 @@ sub check_cert {
 sub check_server {
   my ($host) = @_;
 
-  my $agent = $useragents[rand @useragents];
-  my $ua = LWP::UserAgent->new();
-  # deactivate redirection
-  $ua->requests_redirectable(undef);
-  $ua->timeout(5);
-  $ua->agent($agent);
+  if (!-e "./jsons/${host}.json") {
+    my $agent = $useragents[rand @useragents];
+    system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${host}.json", $host);
+    open FHT, '<', "./jsons/${host}.json" or die $!;
+    if (scalar @{[<FHT>]} == 0) {
+      print "  Trying SSL…\n";
+      system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${host}.json", "https://${host}");
+    }
+    close FHT;
+  }
 
-  my $url = "https://${host}/";
-  my $res = $ua->head($url);
-
-  return {
-    hsts   => ($res->header('strict-transport-security') || 'not set'),
-    csp    => ($res->header('content-security-policy') || 'not set'),
-    server => ($res->header('server') || 'unknown'),
-    xframe => ($res->header('x-frame-options') || 'not set'),
-  };
+  my $list = [];
+  my $json = JSON->new;
+  open FH, '<', "./jsons/${host}.json" or die $!;
+  while (<FH>) {
+    push @$list, $json->decode($_);
+  }
+  close FH;
+  return $list;
 }
