@@ -36,11 +36,10 @@ my @useragents = (
 );
 
 
-my ($front, $ebanking);
 my $json_obj = JSON->new;
 my $json_output = 'output.json';
 my $json = {};
-my $json_version = Perl::Version->new('1.0.1');
+my $json_version = Perl::Version->new('1.0.2');
 
 if (-e $json_output) {
   local $/;
@@ -61,24 +60,27 @@ $json->{'version'} = $json_version->stringify();
 $json->{'date'} = $date;
 
 open my $fh,  '<', $file or die $!;
+my ($front, $ebanking, $bank_name);
 while(my $row = $csv->getline($fh)) {
-  $front = $row->[0];
-
+  $bank_name = $row->[0];
+  $front = $row->[1];
 
   if (!exists $json->{$front}) {
     $json->{$front} = check($front, 'front');
     $json->{$front}->{'role'} = 'front';
+    $json->{$front}->{'bank_name'} = $bank_name;
   } else {
     print "\n${front} already done\n";
   }
   
-  if (scalar @{$row} == 2) {
-    $ebanking = $row->[1];
+  if (scalar @{$row} == 3) {
+    $ebanking = $row->[2];
     if ($front ne $ebanking) {
       if (!exists $json->{$ebanking}) {
         $json->{$ebanking} = check($ebanking, 'ebanking', $front);
         $json->{$ebanking}->{'role'} = 'ebanking';
         $json->{$ebanking}->{'bank'} = $front;
+        $json->{$ebanking}->{'bank_name'} = $bank_name;
 
         $json->{$front}->{'ebanking'} = $ebanking;
       } else {
