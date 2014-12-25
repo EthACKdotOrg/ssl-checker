@@ -37,6 +37,7 @@ my @useragents = (
 
 
 my $json_obj = JSON->new;
+$json_obj->utf8(1);
 my $json_output = 'output.json';
 my $json = {};
 my $json_version = Perl::Version->new('1.0.2');
@@ -54,12 +55,12 @@ if (!exists $json->{'version'} or $json_version > Perl::Version->new($json->{'ve
   $json = {};
 }
 
-my $date = strftime "%y-%m-%d", localtime;
+my $date = strftime "%Y-%m-%d", localtime;
 
 $json->{'version'} = $json_version->stringify();
 $json->{'date'} = $date;
 
-open my $fh,  '<', $file or die $!;
+open my $fh,  '<:encoding(utf8)', $file or die $!;
 my ($front, $ebanking, $bank_name);
 while(my $row = $csv->getline($fh)) {
   $bank_name = $row->[0];
