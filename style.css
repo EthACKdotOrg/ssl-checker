@@ -128,18 +128,31 @@ nav#loading{
   text-shadow: 0 1px #fff;
   text-align:center;
 }
-nav#loading:before{
-  font-family: 'FontAwesome';
-  content:"\f1ce";
-  font-size:50px;
-  -webkit-animation: fa-spin 2s infinite linear;
-  animation: fa-spin 2s infinite linear;
+nav#loading p{
+  width:50px;
+  display: inline-block;
+  animation-direction: normal;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-name: loading;
+  /*For the dummie webkit:*/
+  -webkit-animation-direction: normal;
+  -webkit-animation-duration: 2s;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-timing-function: linear;
+  -webkit-animation-name: loading;
 }
-@-webkit-keyframes fa-spin {
+nav#loading p:before{
+  font-family: 'FontAwesome';
+  content:"\f110";
+  font-size:50px;
+}
+@-webkit-keyframes loading{
 0% {-webkit-transform: rotate(0deg);}
 100% {-webkit-transform: rotate(359deg);}
 }
-@keyframes fa-spin {
+@keyframes loading {
 0% {transform: rotate(0deg);}
 100% {transform: rotate(359deg);}
 }
@@ -252,7 +265,8 @@ section{
 section a:link, section a:visited{color:#B05702;}
 
 ul.postContent{
-  margin: 20px;
+  margin: 20px 40px;
+  padding:0;
   display:inline-block;
 }
 section h2{
@@ -274,6 +288,7 @@ section h2 a:before {
 }
 ul.note{
   width:190px;
+  margin-left: 10px;
   font-size:25px;
   height:100%;
   padding:0;
@@ -354,13 +369,31 @@ footer{
   }
 }
 @media (max-width:530px) {
+  .speetch {
+    position: relative;
+    top: 0;
+    left: 4%;
+    transform: translate(0, 0);
+  }
   ul.note{
     width:100%;
+    display: inline;
   }
   ul.bloc{
     width:100%;
-    margin-top:50px;
-    margin-bottom:0;
+    margin:50px 15px 0 15px;
     transform: translate(0 , 0);
+  }
+  ul.postContent{
+    margin: 20px 15px;
+  }
+  a.top {
+	margin-right:4px;
+  }
+  .twitter-typeahead {
+    width:calc(100% - 62px);
+  }
+  .typeahead, .tt-query, .tt-hint {
+    width: 100%;
   }
 }
