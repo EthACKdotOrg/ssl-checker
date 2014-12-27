@@ -1,0 +1,340 @@
+/*
+Banquignols
+ */
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('fonts/fontawesome-webfont.eot?v=4.2.0');
+  src: url('fonts/fontawesome-webfont.eot?#iefix&v=4.2.0') format('embedded-opentype'), url('fonts/fontawesome-webfont.woff?v=4.2.0') format('woff'), url('../fonts/fontawesome-webfont.ttf?v=4.2.0') format('truetype'), url('fonts/fontawesome-webfont.svg?v=4.2.0#fontawesomeregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'cantarellregular';
+  src: url('fonts/cantarell-regular-webfont.eot');
+  src: url('fonts/cantarell-regular-webfont.eot?#iefix') format('embedded-opentype'),
+  url('fonts/cantarell-regular-webfont.woff') format('woff'),
+  url('fonts/cantarell-regular-webfont.ttf') format('truetype'),
+  url('fonts/cantarell-regular-webfont.svg#cantarellregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+html,body{
+  height: 100%;
+}
+body{
+  background: #ccc;
+  border:none;
+  margin:0;
+  text-align: left;
+  color: #0f0f0f;
+  font-style: normal;
+  font-variant:normal;
+  line-height: 1.78em;
+  font-weight: lighter;
+  font-size:0.79em;
+  text-indent:0em;
+  font-family:"cantarell-regular", Helvetica, Arial, sans-serif;
+}
+h1,h2,h3,h4,h5{text-decoration:none}
+button{cursor: pointer;}
+a:link,a:visited {color: /*#2184BD*/#D18114;text-decoration:none;}  
+pre{
+  border:solid 1px #ccc;
+  border-radius: 4px;
+  background: #DCD6CD;
+  box-shadow: 0px 1px #FFF;
+  color:#222;
+  text-shadow: 0 1px #fff;
+  padding: 6px 12px;
+  text-indent:0;
+  line-height:1.6em;
+  font-size:1.2em;
+  white-space:pre-wrap;
+}
+:focus {outline: 0;}
+img.wp-smiley {
+  float: none;
+  margin-bottom: -0.38em;
+}
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+
+#wrap{
+  height:100%;
+  width:100%;
+  position:relative;
+  float:left;
+  padding:0;
+  margin:0;
+  overflow:auto;
+}
+article{
+  width:100%;
+  min-height:100%;
+  position:relative;
+  float:left;
+}
+article h1{
+  font-size:4.2em;
+  font-weight: lighter;
+  text-align: center;
+  line-height: 1.2em;
+}
+article h4{
+  font-size:2em;
+  font-size: 1.4em;
+  line-height: 2.02em;
+  font-weight: lighter;
+}
+article.top{
+  background:#222;
+  color:#fff;
+  box-shadow: 0px 1px #FFF, 0 -4px 4px #111 inset;
+  text-shadow:0px 1px 2px #000, 0 8px 8px #000;
+  z-index:2;
+}
+
+.speetch{
+  width:90%;
+  position:absolute;
+  top:40%;
+  left:50%;
+  transform:translate(-50% , -50%);
+}
+a.next{
+  display:block;
+  cursor: pointer;
+  color:#fff;
+  position:absolute;
+  bottom:8px;
+  left:50%;
+  transform:translate(-50% , 0);
+  background: transparent;
+}
+a.next:before{
+  font-family: 'FontAwesome';
+  content:"\f103";
+  font-size:30px;
+}
+
+a.top{
+  display:block;
+  cursor: pointer;
+  color:#fff;
+  position:fixed;
+  bottom:8px;
+  right:18px;
+  background: #222;
+  height:38px;
+  width:38px;
+  border-radius:30px;
+  box-shadow: 0 1px 3px #888;
+  z-index:2;
+}
+a.top:before{
+  font-family: 'FontAwesome';
+  content:"\f0de";
+  font-size: 28px;
+  line-height: 50px;
+  text-indent: 0px;
+  margin-left: 10px;
+}
+section{
+  max-width:1030px;
+  margin: 25px auto;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  box-shadow: 0px 1px #e8e8e8;
+  background: #eee;
+  text-shadow: 0 1px #fff;
+}
+ul.postContent{
+  margin: 20px;
+  display:inline-block;
+}
+section h2{
+  display:block;
+  width:100%;
+  text-align:center;
+  margin-bottom: 50px;
+  font-weight: lighter;
+  font-size: 2em;
+}
+section > h2 > a {
+  color: #0f0f0f;
+}
+section h2 a:before {
+  font-family: 'FontAwesome';
+  content: '\f0c1 ';
+  color: #0f0f0f;
+}
+ul.note{
+  width:190px;
+  font-size:25px;
+  height:100%;
+  padding:0;
+  display:inline-block;
+  top: 0;
+  transform: translate(0 , -104%);
+}
+ul.note li{
+  list-style:none;
+  margin:0 2px 22px 8px;
+  padding:0
+}
+ul.note li:before{
+  font-size:18px;
+}
+ul.note li:nth-child(1):before{
+  content:"site: ";
+}
+ul.note li:nth-child(2):before{
+  content:"e-banking: ";
+}
+
+ul.bloc{
+  width:calc(50% - 100px);
+  display:inline-block;
+  margin:0;
+  padding:0;
+}
+ul.bloc li{
+  padding:0;
+  list-style:none;
+}
+ul.bloc li p{
+  color:#000;
+  font-size: 1.1em;
+}
+ul.bloc li p:before{
+  color:#222;
+  font-size: 0.84em;
+}
+
+ul.bloc.left li:nth-child(1) p:before{content:"Site: "}
+ul.bloc.left li:nth-child(2) p:before{content:"Pays/IPs: "}
+ul.bloc.left li:nth-child(3) p:before{content:"Support SSL: "}
+ul.bloc.left li:nth-child(4) p:before{content:"Serveur applicatif détecté: "}
+ul.bloc.left li:nth-child(5) p:before{content:"Protocoles supportés: "}
+ul.bloc.left li:nth-child(6) p:before{content:"Ciphers: "}
+ul.bloc.left li:nth-child(7) p:before{content:"Confidentialité persistante: "}
+
+ul.bloc.right li:nth-child(1) p:before{content:"E-Banking: "}
+ul.bloc.right li:nth-child(2) p:before{content:"Pays/IPs: "}
+ul.bloc.right li:nth-child(3) p:before{content:"Support SSL: "}
+ul.bloc.right li:nth-child(4) p:before{content:"Serveur applicatif détecté: "}
+ul.bloc.right li:nth-child(5) p:before{content:"Protocoles supportés: "}
+ul.bloc.right li:nth-child(6) p:before{content:"Ciphers: "}
+ul.bloc.right li:nth-child(7) p:before{content:"Confidentialité persistante: "}
+
+footer{
+  width:100%;
+  min-height:50px;
+  position:relative;
+  float:left;
+  background:#222;
+  color:#fff;
+  box-shadow: 0px -1px #FFF, 0 4px 4px #111 inset;
+  text-shadow:0px 1px 2px #000;
+  z-index:2;
+}
+
+@media (max-width:890px) {
+  section{
+    border-radius:0;
+  }
+  ul.bloc{
+    width:calc(100% - 200px);
+  }
+}
+@media (max-width:530px) {
+  ul.note{
+    width:100%;
+  }
+  ul.bloc{
+    width:100%;
+    margin-top:50px;
+    margin-bottom:0;
+    transform: translate(0 , 0);
+  }
+}
+.typeahead,
+.tt-query,
+.tt-hint {
+  width: 396px;
+  height: 30px;
+  padding: 8px 12px;
+  font-size: 24px;
+  line-height: 30px;
+  border: 2px solid #ccc;
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  outline: none;
+}
+
+.typeahead {
+  background-color: #fff;
+}
+
+.typeahead:focus {
+  border: 2px solid #0f0f0f;
+}
+
+.tt-query {
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+     -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+          box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+}
+
+.tt-hint {
+  color: #999
+}
+
+.tt-dropdown-menu {
+  width: 422px;
+  margin-top: 12px;
+  padding: 8px 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+          box-shadow: 0 5px 10px rgba(0,0,0,.2);
+}
+.tt-suggestion {
+  padding: 3px 20px;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.tt-suggestion.tt-cursor {
+  color: #fff;
+  background-color: #0097cf;
+
+}
+
+.tt-suggestion p {
+  margin: 0;
+}
+
+#loading {
+  text-align:center;
+  font-size:42px;
+  height: 60px;
+  padding-top:30px;
+}
+#loading:before {
+  font-family: 'FontAwesome';
+  content: '\f110';
+}
+#github:before {
+  font-family: 'FontAwesome';
+  content: '\f09b';
+}
