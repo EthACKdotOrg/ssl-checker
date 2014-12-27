@@ -4,7 +4,7 @@ function addClass(id,new_class){
   new_class=new_class.split(",");
 
   for(i=0;i<new_class.length;i++){
-    if((" "+document.getElementById(id).className+" ").indexOf(" "+new_class[i]+" ")==-1){
+    if(([ ]+document.getElementById(id).className+[ ]).indexOf([ ]+new_class[i]+[ ])==-1){
       document.getElementById(id).className+=" "+new_class[i];
       n++;
     }
@@ -121,6 +121,10 @@ function build_row(site, url, ebanking) {
     line += '<li><p></p></li>';
     line += '<li><p></p></li>';
   }
+  line += '</ul>';
+  line += '<button class="more" title="more"></button>';
+  line += '<button class="more" title="less"></button>';
+  line += '<ul class="postContent hidding">';
   line += '</ul>';
   line += '</section>';
 

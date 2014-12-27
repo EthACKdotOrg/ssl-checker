@@ -268,6 +268,7 @@ ul.postContent{
   margin: 20px 40px;
   padding:0;
   display:inline-block;
+  position:relative;
 }
 section h2{
   display:block;
@@ -345,6 +346,33 @@ ul.bloc.right li:nth-child(4) p:before{content:"Serveur applicatif détecté: "}
 ul.bloc.right li:nth-child(5) p:before{content:"Protocoles supportés: "}
 ul.bloc.right li:nth-child(6) p:before{content:"Ciphers: "}
 ul.bloc.right li:nth-child(7) p:before{content:"Confidentialité persistante: "}
+
+button.more{
+background: transparent;
+border: none;
+padding:0;
+width: 100%;
+height:28px;
+margin-bottom: -24px;
+}
+button.more:before{
+  pointer:cursor;
+  font-family: 'FontAwesome';
+  color:#bbb;
+  font-size: 28px;
+  line-height: 0;
+  text-indent: 0px;
+  text-shadow: 0 1px #fff;
+}
+button.more[title="more"]:before{
+  content:"\f055";
+}
+button.more[title="less"]:before{
+  content:"\f056";
+}
+button.more[title="less"]{display:none;}
+ul#content.show > button.more[title="more"]{display:block;}
+ul#content.show > button.more[title="less"]{display:none;}
 
 footer{
   width:100%;
