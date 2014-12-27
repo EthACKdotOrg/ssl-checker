@@ -97,7 +97,7 @@ function build_row(site, url, ebanking) {
     ebank_result = build_tile(ebanking, eb_site);
   }
   id = MD5(url);
-  line = '<section>';
+  line = '<section id="'+id+'" >';
   line += '<h2><a name="'+id+'" href="#'+id+'"> '+site['bank_name']+'</a></h2>';
   line += '<ul class="note"><li>'+site_result[1]+'/'+site_result[2]+'</li>';
   if (ebank_result.length > 0) {

@@ -8,22 +8,27 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="user-scalable=yes, width=device-width, initial-scale=1.0/">
-    <link rel="shortcut icon" href="favicon.ico" />
-    <link rel="stylesheet" href="style.css" type="text/css" media="screen" />	
+    <link rel="shortcut icon" href="favicon.ico" />	
     <script type="text/javascript" src="./js/jquery-2.1.3.min.js"></script>
     <script type="text/javascript" src="./js/md5.js"></script>
-    <script type="text/javascript" src="./js/typeahead.js/typeahead.bundle.min.js"></script>
+    <script type="text/javascript" src="./js/typeahead.js/typeahead.bundle.js"></script>
     <script type="text/javascript" src="./js/script.js"></script>
+    <link rel="stylesheet" href="style.css" type="text/css" media="screen" />
   </head>
   <body>
     <div id="wrap">
-      <a href="#top" class="top"></a>
+	  <nav class="dock">
+		  <ul class="alignCenter">
+			<input type="text" placeholder="Rechercher une banque" name="typeahead" class="typeahead">
+			<a href="#top" class="top"></a>
+		  </ul>
+	  </nav>
       <article class="top">
       <div class="speetch">
         <h1>POODLE, Heartbleed... et quoi d'autre ?</h1>
         <h4> Les banques se targuent d'être sûres et d'offrir "le meilleur"
           au niveau sécurité à leurs clients. Mais que vaut réellement la 
-          connexion entre vous et eux ? </h4>
+          connexion entre vous et eux ? Votre banque est-elle une "Banquignole"?</h4>
       </div>
       <a class="next" href="#banks"></a>
       </article>
@@ -35,18 +40,17 @@
         la <a href="https://fr.wikipedia.org/wiki/Confidentialit%C3%A9_persistante">confidentialité persistante</a>
         comptent pour chacun 2 points maximum.<br>
         L'absence de connexion SSL enlève un point.<br>
-        Le site comporte <span id="bankers"></span> banques (dernière mise à jour: <span id="update"></span>).
       </ul>
       <ul class="postContent">
-        <input type="text" placeholder="Rechercher une banque" name="typeahead" class="typeahead">
+        Le site comporte <span id="bankers"></span> banques (dernière mise à jour: <span id="update"></span>).
       </ul>
       </section>
-      <section id="loading"> loading…</section>
+      <nav id="loading"></nav>
       </article>
       <footer>
-      <div class="speetch">
-        Banquignols - Provided by <a href="https://ethack.org/">EthACK</a>
-      </div>
+		<ul class="alignCenter">
+			Banquignols - Provided by <a href="https://ethack.org/">EthACK</a> | <a href="https://github.com/EthACKdotOrg/ssl-checker">ssl-checker</a>
+        </ul>
       </footer>
     </div>
   </body>

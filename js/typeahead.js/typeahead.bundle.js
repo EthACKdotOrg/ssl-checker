@@ -736,10 +736,7 @@
     var css = function() {
         "use strict";
         var css = {
-            wrapper: {
-                position: "relative",
-                display: "inline-block"
-            },
+            wrapper: {},
             hint: {
                 position: "absolute",
                 top: "0",
@@ -751,26 +748,14 @@
             input: {
                 position: "relative",
                 verticalAlign: "top",
-                backgroundColor: "transparent"
             },
             inputWithNoHint: {
                 position: "relative",
                 verticalAlign: "top"
             },
-            dropdown: {
-                position: "absolute",
-                top: "100%",
-                left: "0",
-                zIndex: "100",
-                display: "none"
-            },
-            suggestions: {
-                display: "block"
-            },
-            suggestion: {
-                whiteSpace: "nowrap",
-                cursor: "pointer"
-            },
+            dropdown: {},
+            suggestions: {},
+            suggestion: {},
             suggestionChild: {
                 whiteSpace: "normal"
             },
