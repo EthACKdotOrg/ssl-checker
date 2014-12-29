@@ -40,7 +40,9 @@ $.getJSON("./output.json", function(data) {
         var ebanking = data[site['ebanking']];
         build_row(site, sites[s], ebanking);
       } else if(site['ebanking'] == 'self') {
-        build_row(site, sites[s], site);
+        ebanking = site;
+        ebanking['role'] = 'ebanking';
+        build_row(site, sites[s], ebanking);
       } else if (site['ebanking'] == 'app') {
         build_row(site, sites[s], {});
       }
