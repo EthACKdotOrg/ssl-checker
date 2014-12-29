@@ -255,13 +255,21 @@ function build_tile(site, url) {
   var trackers = new Array();
   var tracking = false;
   if (server_info['plugins']['Google-Analytics'] != undefined) {
-    result -= 1;
+    if (site['role'] == 'ebanking') {
+      result -= 2;
+    } else {
+      result -= 1;
+    }
     trackers.push('Google Analytics');
     tracking = true;
   }
 
   if (server_info['plugins']['Google-API'] != undefined) {
-    result -= 1;
+    if (site['role'] == 'ebanking') {
+      result -= 2;
+    } else {
+      result -= 1;
+    }
     trackers.push('Google API');
     tracking = true;
   }
@@ -269,7 +277,11 @@ function build_tile(site, url) {
   // Flash - remove point!
   var flash = false;
   if (server_info['plugins']['Adobe-Flash'] != undefined) {
-    result -= 1;
+    if (site['role'] == 'ebanking') {
+      result -= 2;
+    } else {
+      result -= 1;
+    }
     flash = true;
   }
 
@@ -282,11 +294,19 @@ function build_tile(site, url) {
       if (server_info['plugins']['X-Frame-Options']['string'].indexOf('SAMEORIGIN') != -1) {
         locked_frame = true;
       } else {
-        result -= 1;
+        if (site['role'] == 'ebanking') {
+          result -= 2;
+        } else {
+          result -= 1;
+        }
         locked_frame = false;
       }
     } else {
-      result -= 1;
+      if (site['role'] == 'ebanking') {
+        result -= 2;
+      } else {
+        result -= 1;
+      }
       locked_frame = false;
     }
   }
