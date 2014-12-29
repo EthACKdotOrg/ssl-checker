@@ -251,6 +251,46 @@ function build_tile(site, url) {
   }
   result_max += 2;
 
+  // trackers: remove points.
+  var trackers = new Array();
+  var tracking = false;
+  if (server_info['plugins']['Google-Analytics'] != undefined) {
+    result -= 1;
+    trackers.push('Google Analytics');
+    tracking = true;
+  }
+
+  if (server_info['plugins']['Google-API'] != undefined) {
+    result -= 1;
+    trackers.push('Google API');
+    tracking = true;
+  }
+
+  // Flash - remove point!
+  var flash = false;
+  if (server_info['plugins']['Adobe-Flash'] != undefined) {
+    result -= 1;
+    flash = true;
+  }
+
+  // Frame? If so, X-Frame-Options?
+  var framed = false;
+  var locked_frame = true;
+  if (server_info['plugins']['Frame'] != undefined) {
+    framed = true;
+    if (server_info['plugins']['X-Frame-Options'] != undefined) {
+      if (server_info['plugins']['X-Frame-Options']['string'].indexOf('SAMEORIGIN') != -1) {
+        locked_frame = true;
+      } else {
+        result -= 1;
+        locked_frame = false;
+      }
+    } else {
+      result -= 1;
+      locked_frame = false;
+    }
+  }
+
 
 
   line = '<li><p>'+url+'</p></li>';
@@ -275,6 +315,26 @@ function build_tile(site, url) {
     line += '<li><p>'+pfs_support+'</p></li>';
   } else {
     line += '<li><p>aucun</p></li>';
+  }
+  if (tracking) {
+    line += '<li><p>'+trackers.length+' script(s)</p></li>';
+  } else {
+    line += '<li><p>aucun</p></li>';
+  }
+  if (flash) {
+    line += '<li><p>oui</p></li>';
+  } else {
+    line += '<li><p>non</p></li>';
+  }
+
+  if (framed) {
+    if (locked_frame) {
+      line += '<li><p>Oui, protégées</p></li>';
+    } else {
+      line += '<li><p>Oui, NON protégées</p></li>';
+    }
+  } else {
+    line += '<li><p>non</p></li>';
   }
 
   return new Array(line, result, result_max);
