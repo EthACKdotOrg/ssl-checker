@@ -313,6 +313,27 @@ function build_tile(site, url) {
     }
   }
 
+  // Heartbleed: announced April 1, 2014 — has the SSL certificate been changed right after?
+  // NOTA: unable to know if server were really affected — so far, apache/nginx were, Windows stuff wasn't.
+  // Also, if they "re-keyed", the certificate validity doesn't change…
+  var certificate = '—';
+  if (site['certificate']['not_before'] != undefined) {
+    var start = new Date(site['certificate']['not_before']);
+    var end = new Date(site['certificate']['not_after']);
+    certificate = 'du '+start.getDate()+'.'+start.getMonth()+'.'+start.getFullYear();
+    certificate += ' au '+end.getDate()+'.'+end.getMonth()+'.'+end.getFullYear();
+
+    var now = new Date();
+    if (end.getTime() < now.getTime()) {
+      console.log('Uho…');
+      if (site['role'] == 'ebanking') {
+        result -= 2;
+      } else {
+        result -= 1;
+      }
+    }
+  }
+
 
 
   line = '<li><p>'+url+'</p></li>';
@@ -322,6 +343,7 @@ function build_tile(site, url) {
   } else {
     line += '<li><p>non</p></li>';
   }
+  line += '<li><p>'+certificate+'</p></li>';
   line += '<li><p>'+server+'</p></li>';
   if (site['protocols'] != undefined && site['protocols'].length > 0) {
     line += '<li><p>'+site['protocols'].join(', ')+'</p></li>';
