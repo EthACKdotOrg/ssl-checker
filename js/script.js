@@ -83,6 +83,21 @@ $.getJSON("./output.json", function(data) {
     $('.typeahead').val('');
   });
 
+  $('button[title="more"]').click(function(e) {
+    e.preventDefault();
+    $(this).hide();
+    var id = $(this).attr('xattr');
+    $('button[title="less"][xattr="'+id+'"]').show();
+    $('ul[xattr="'+id+'"]').show();
+  });
+
+  $('button[title="less"]').click(function(e) {
+    e.preventDefault();
+    $(this).hide();
+    var id = $(this).attr('xattr');
+    $('button[title="more"][xattr="'+id+'"]').show();
+    $('ul[xattr="'+id+'"]').hide();
+  });
 
 }).done(function() { $('#loading').hide(); });
 
@@ -124,9 +139,9 @@ function build_row(site, url, ebanking) {
     line += '<li><p></p></li>';
   }
   line += '</ul>';
-  line += '<button class="more" title="more"></button>';
-  line += '<button class="more" title="less"></button>';
-  line += '<ul class="postContent hidding">';
+  line += '<button class="more" title="more" xattr="'+id+'"></button>';
+  line += '<button class="more" title="less" xattr="'+id+'"></button>';
+  line += '<ul class="postContent hidding" xattr="'+id+'">';
   line += '</ul>';
   line += '</section>';
 
@@ -325,7 +340,6 @@ function build_tile(site, url) {
 
     var now = new Date();
     if (end.getTime() < now.getTime()) {
-      console.log('Uho…');
       if (site['role'] == 'ebanking') {
         result -= 2;
       } else {
