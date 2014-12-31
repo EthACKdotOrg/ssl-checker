@@ -318,6 +318,12 @@ ul.bloc{
   margin:0;
   padding:0;
 }
+.hidding > ul.bloc{
+  width:calc(50% - 48px);
+  display:inline-block;
+  margin:16px 24px;
+  padding:0;
+}
 ul.bloc li{
   padding:0;
   list-style:none;
@@ -361,7 +367,7 @@ border: none;
 padding:0;
 width: 100%;
 height:28px;
-margin-bottom: -24px;
+margin-bottom: 6px;
 }
 button.more:before{
   pointer:cursor;
@@ -378,9 +384,7 @@ button.more[title="more"]:before{
 button.more[title="less"]:before{
   content:"\f056";
 }
-button.more[title="less"]{display:none;}
-ul#content.show > button.more[title="more"]{display:block;}
-ul#content.show > button.more[title="less"]{display:none;}
+button.more[title="less"], .hidding{display:none;}
 
 footer{
   width:100%;
