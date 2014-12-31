@@ -1,31 +1,3 @@
-function addClass(id,new_class){
-  var i,n=0;
-
-  new_class=new_class.split(",");
-
-  for(i=0;i<new_class.length;i++){
-    if(([ ]+document.getElementById(id).className+[ ]).indexOf([ ]+new_class[i]+[ ])==-1){
-      document.getElementById(id).className+=" "+new_class[i];
-      n++;
-    }
-  }
-
-  return n;
-}
-function removeClass(id,classToRemove){
-
-  var i = 0,
-      n = 0,
-      $id = document.getElementById(id),
-      classes = classToRemove.split(",");
-
-  for(; i < classes.length; i++) {
-
-    if( $id.className.indexOf(classes[i]) > -1 ) {
-      $id.className = $id.className.replace(classes[i],'').replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-    }
-  }
-}
 $.getJSON("./output.json", function(data) {
   var sites = Object.keys(data);
   var data_set = new Array();
@@ -88,7 +60,7 @@ $.getJSON("./output.json", function(data) {
     $(this).hide();
     var id = $(this).attr('xattr');
     $('button[title="less"][xattr="'+id+'"]').show();
-    $('ul[xattr="'+id+'"]').show();
+    $('div[xattr="'+id+'"]').show();
   });
 
   $('button[title="less"]').click(function(e) {
@@ -96,7 +68,7 @@ $.getJSON("./output.json", function(data) {
     $(this).hide();
     var id = $(this).attr('xattr');
     $('button[title="more"][xattr="'+id+'"]').show();
-    $('ul[xattr="'+id+'"]').hide();
+    $('div[xattr="'+id+'"]').hide();
   });
 
 }).done(function() { $('#loading').hide(); });
@@ -141,8 +113,12 @@ function build_row(site, url, ebanking) {
   line += '</ul>';
   line += '<button class="more" title="more" xattr="'+id+'"></button>';
   line += '<button class="more" title="less" xattr="'+id+'"></button>';
-  line += '<ul class="postContent hidding" xattr="'+id+'">';
+  line += '<div class="postContent hidding" xattr="'+id+'">';
+  line += '<ul class="bloc left"> blah';
   line += '</ul>';
+  line += '<ul class="bloc right"> blah';
+  line += '</ul>';
+  line += '</div>';
   line += '</section>';
 
   $('#banks').append(line);
