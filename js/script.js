@@ -40,7 +40,9 @@ $.getJSON("./output.json", function(data) {
         var ebanking = data[site['ebanking']];
         build_row(site, sites[s], ebanking);
       } else if(site['ebanking'] == 'self') {
-        build_row(site, sites[s], site);
+        ebanking = site;
+        ebanking['role'] = 'ebanking';
+        build_row(site, sites[s], ebanking);
       } else if (site['ebanking'] == 'app') {
         build_row(site, sites[s], {});
       }
@@ -81,6 +83,21 @@ $.getJSON("./output.json", function(data) {
     $('.typeahead').val('');
   });
 
+  $('button[title="more"]').click(function(e) {
+    e.preventDefault();
+    $(this).hide();
+    var id = $(this).attr('xattr');
+    $('button[title="less"][xattr="'+id+'"]').show();
+    $('ul[xattr="'+id+'"]').show();
+  });
+
+  $('button[title="less"]').click(function(e) {
+    e.preventDefault();
+    $(this).hide();
+    var id = $(this).attr('xattr');
+    $('button[title="more"][xattr="'+id+'"]').show();
+    $('ul[xattr="'+id+'"]').hide();
+  });
 
 }).done(function() { $('#loading').hide(); });
 
@@ -122,9 +139,9 @@ function build_row(site, url, ebanking) {
     line += '<li><p></p></li>';
   }
   line += '</ul>';
-  line += '<button class="more" title="more"></button>';
-  line += '<button class="more" title="less"></button>';
-  line += '<ul class="postContent hidding">';
+  line += '<button class="more" title="more" xattr="'+id+'"></button>';
+  line += '<button class="more" title="less" xattr="'+id+'"></button>';
+  line += '<ul class="postContent hidding" xattr="'+id+'">';
   line += '</ul>';
   line += '</section>';
 
@@ -251,6 +268,86 @@ function build_tile(site, url) {
   }
   result_max += 2;
 
+  // trackers: remove points.
+  var trackers = new Array();
+  var tracking = false;
+  if (server_info['plugins']['Google-Analytics'] != undefined) {
+    if (site['role'] == 'ebanking') {
+      result -= 2;
+    } else {
+      result -= 1;
+    }
+    trackers.push('Google Analytics');
+    tracking = true;
+  }
+
+  if (server_info['plugins']['Google-API'] != undefined) {
+    if (site['role'] == 'ebanking') {
+      result -= 2;
+    } else {
+      result -= 1;
+    }
+    trackers.push('Google API');
+    tracking = true;
+  }
+
+  // Flash - remove point!
+  var flash = false;
+  if (server_info['plugins']['Adobe-Flash'] != undefined) {
+    if (site['role'] == 'ebanking') {
+      result -= 2;
+    } else {
+      result -= 1;
+    }
+    flash = true;
+  }
+
+  // Frame? If so, X-Frame-Options?
+  var framed = false;
+  var locked_frame = true;
+  if (server_info['plugins']['Frame'] != undefined) {
+    framed = true;
+    if (server_info['plugins']['X-Frame-Options'] != undefined) {
+      if (server_info['plugins']['X-Frame-Options']['string'].indexOf('SAMEORIGIN') != -1) {
+        locked_frame = true;
+      } else {
+        if (site['role'] == 'ebanking') {
+          result -= 2;
+        } else {
+          result -= 1;
+        }
+        locked_frame = false;
+      }
+    } else {
+      if (site['role'] == 'ebanking') {
+        result -= 2;
+      } else {
+        result -= 1;
+      }
+      locked_frame = false;
+    }
+  }
+
+  // Heartbleed: announced April 1, 2014 — has the SSL certificate been changed right after?
+  // NOTA: unable to know if server were really affected — so far, apache/nginx were, Windows stuff wasn't.
+  // Also, if they "re-keyed", the certificate validity doesn't change…
+  var certificate = '—';
+  if (site['certificate']['not_before'] != undefined) {
+    var start = new Date(site['certificate']['not_before']);
+    var end = new Date(site['certificate']['not_after']);
+    certificate = 'du '+start.getDate()+'.'+start.getMonth()+'.'+start.getFullYear();
+    certificate += ' au '+end.getDate()+'.'+end.getMonth()+'.'+end.getFullYear();
+
+    var now = new Date();
+    if (end.getTime() < now.getTime()) {
+      if (site['role'] == 'ebanking') {
+        result -= 2;
+      } else {
+        result -= 1;
+      }
+    }
+  }
+
 
 
   line = '<li><p>'+url+'</p></li>';
@@ -260,6 +357,7 @@ function build_tile(site, url) {
   } else {
     line += '<li><p>non</p></li>';
   }
+  line += '<li><p>'+certificate+'</p></li>';
   line += '<li><p>'+server+'</p></li>';
   if (site['protocols'] != undefined && site['protocols'].length > 0) {
     line += '<li><p>'+site['protocols'].join(', ')+'</p></li>';
@@ -275,6 +373,26 @@ function build_tile(site, url) {
     line += '<li><p>'+pfs_support+'</p></li>';
   } else {
     line += '<li><p>aucun</p></li>';
+  }
+  if (tracking) {
+    line += '<li><p>'+trackers.length+' script(s)</p></li>';
+  } else {
+    line += '<li><p>aucun</p></li>';
+  }
+  if (flash) {
+    line += '<li><p>oui</p></li>';
+  } else {
+    line += '<li><p>non</p></li>';
+  }
+
+  if (framed) {
+    if (locked_frame) {
+      line += '<li><p>Oui, protégées</p></li>';
+    } else {
+      line += '<li><p>Oui, NON protégées</p></li>';
+    }
+  } else {
+    line += '<li><p>non</p></li>';
   }
 
   return new Array(line, result, result_max);

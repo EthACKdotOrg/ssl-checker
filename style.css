@@ -334,18 +334,26 @@ ul.bloc li p:before{
 ul.bloc.left li:nth-child(1) p:before{content:"Site: "}
 ul.bloc.left li:nth-child(2) p:before{content:"Pays/IPs: "}
 ul.bloc.left li:nth-child(3) p:before{content:"Support SSL: "}
-ul.bloc.left li:nth-child(4) p:before{content:"Serveur applicatif détecté: "}
-ul.bloc.left li:nth-child(5) p:before{content:"Protocoles supportés: "}
-ul.bloc.left li:nth-child(6) p:before{content:"Ciphers: "}
-ul.bloc.left li:nth-child(7) p:before{content:"Confidentialité persistante: "}
+ul.bloc.left li:nth-child(4) p:before{content:"Validité: "}
+ul.bloc.left li:nth-child(5) p:before{content:"Serveur applicatif détecté: "}
+ul.bloc.left li:nth-child(6) p:before{content:"Protocoles supportés: "}
+ul.bloc.left li:nth-child(7) p:before{content:"Ciphers: "}
+ul.bloc.left li:nth-child(8) p:before{content:"Confidentialité persistante: "}
+ul.bloc.left li:nth-child(9) p:before{content:"Trackers: "}
+ul.bloc.left li:nth-child(10) p:before{content:"Flash: "}
+ul.bloc.left li:nth-child(11) p:before{content:"Frames: "}
 
 ul.bloc.right li:nth-child(1) p:before{content:"E-Banking: "}
 ul.bloc.right li:nth-child(2) p:before{content:"Pays/IPs: "}
 ul.bloc.right li:nth-child(3) p:before{content:"Support SSL: "}
-ul.bloc.right li:nth-child(4) p:before{content:"Serveur applicatif détecté: "}
-ul.bloc.right li:nth-child(5) p:before{content:"Protocoles supportés: "}
-ul.bloc.right li:nth-child(6) p:before{content:"Ciphers: "}
-ul.bloc.right li:nth-child(7) p:before{content:"Confidentialité persistante: "}
+ul.bloc.right li:nth-child(4) p:before{content:"Validité: "}
+ul.bloc.right li:nth-child(5) p:before{content:"Serveur applicatif détecté: "}
+ul.bloc.right li:nth-child(6) p:before{content:"Protocoles supportés: "}
+ul.bloc.right li:nth-child(7) p:before{content:"Ciphers: "}
+ul.bloc.right li:nth-child(8) p:before{content:"Confidentialité persistante: "}
+ul.bloc.right li:nth-child(9) p:before{content:"Trackers: "}
+ul.bloc.right li:nth-child(10) p:before{content:"Flash: "}
+ul.bloc.right li:nth-child(11) p:before{content:"Frames: "}
 
 button.more{
 background: transparent;

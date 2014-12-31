@@ -17,12 +17,12 @@
   </head>
   <body>
     <div id="wrap">
-	  <nav class="dock">
-		  <ul class="alignCenter">
-			<input type="text" placeholder="Rechercher une banque" name="typeahead" class="typeahead">
-			<a href="#top" class="top"></a>
-		  </ul>
-	  </nav>
+      <nav class="dock">
+      <ul class="alignCenter">
+        <input type="text" placeholder="Rechercher une banque" name="typeahead" class="typeahead">
+        <a href="#top" class="top"></a>
+      </ul>
+      </nav>
       <article class="top">
       <div class="speetch">
         <h1>POODLE, Heartbleed... et quoi d'autre ?</h1>
@@ -40,6 +40,10 @@
         la <a href="https://fr.wikipedia.org/wiki/Confidentialit%C3%A9_persistante">confidentialité persistante</a>
         comptent pour chacun 2 points maximum.<br>
         L'absence de connexion SSL enlève un point.<br>
+        La présence de scripts de tracking (Google Analytics, etc) enlèvent un point, deux points si cela concerne la partie ebanking.<br>
+        La présence de Flash enlève un point, deux points si cela concerne la partie ebanking.<br>
+        La présence de frames sans protection enlève un point, deux points si cela concerne la partie ebanking.<br>
+        Un certificat SSL échu enlève un point, deux points si cela concerne la partie ebanking.<br>
       </ul>
       <ul class="postContent">
         Le site comporte <span id="bankers"></span> banques (dernière mise à jour: <span id="update"></span>).
@@ -48,9 +52,9 @@
       <nav id="loading"><p></p></nav>
       </article>
       <footer>
-		<ul class="alignCenter">
-			Banquignols - Provided by <a href="https://ethack.org/">EthACK</a> | <a href="https://github.com/EthACKdotOrg/ssl-checker">ssl-checker</a>
-        </ul>
+      <ul class="alignCenter">
+        Banquignols - Provided by <a href="https://ethack.org/">EthACK</a> | <a href="https://github.com/EthACKdotOrg/ssl-checker">ssl-checker</a>
+      </ul>
       </footer>
     </div>
   </body>
