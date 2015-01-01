@@ -348,13 +348,15 @@ sub check_ssl {
 
   my $end_certificate = parsedate($certificate->{'not_after'});
   my $certif_pts = 0;
-  if ($end_certificate < time()) {
-    if ($role eq 'ebanking') {
-      $result -= 2;
-      $certif_pts = -2;
-    } else {
-      $result -= 1;
-      $certif_pts = -1;
+  if (scalar $accepted_protocols > 0) {
+    if ($end_certificate < time()) {
+      if ($role eq 'ebanking') {
+        $result -= 2;
+        $certif_pts = -2;
+      } else {
+        $result -= 1;
+        $certif_pts = -1;
+      }
     }
   }
 
@@ -429,7 +431,9 @@ sub check_ssl {
   #     - unprotected on ebanking: -2
 
   my $frame_pts = 0;
+  my $frame_expl = 'no';
   if ($last_redirect->{'plugins'}->{'Frame'}) {
+    my $frame_expl = 'yes';
     if ($last_redirect->{'plugins'}->{'X-Frame-Options'}) {
       if (!grep {$_ eq 'SAMEORIGIN'} @{$last_redirect->{'plugins'}->{'X-Frame-Options'}->{'string'}}) {
         if ($role eq 'ebanking') {
@@ -485,33 +489,43 @@ sub check_ssl {
   #     - if SSLv3 present
   #             - if only TLSv1: 0
   #             - if TLSv1,11,12: +1
-  #     - if only SSLv3:
+  #     - if only SSLv3 or no SSL:
   #             - front: -1
   #             - ebanking: -2
 
   my $protocols_pts = 0;
-  if (grep {$_ eq 'SSLv3'} $accepted_protocols) {
-    if (scalar $accepted_protocols == 1) {
-      if ($role eq 'ebanking') {
-        $result -= 2;
-        $protocols_pts = -2;
+  if (scalar $accepted_protocols > 0) {
+    if (grep {$_ eq 'SSLv3'} $accepted_protocols) {
+      if (scalar $accepted_protocols == 1) {
+        if ($role eq 'ebanking') {
+          $result -= 2;
+          $protocols_pts = -2;
+        } else {
+          $result -= 1;
+          $protocols_pts = -1;
+        }
+      } elsif (scalar $accepted_protocols == 2) {
+        $result += 1;
+        $protocols_pts = 1;
       } else {
-        $result -= 1;
-        $protocols_pts = -1;
+        $result += 2;
+        $protocols_pts = 2;
       }
-    } elsif (scalar $accepted_protocols == 2) {
-      $result += 1;
-      $protocols_pts = 1;
     } else {
-      $result += 2;
-      $protocols_pts = 2;
+      if (scalar $accepted_protocols == 1 && grep {$_ eq 'TLSv1'} $accepted_protocols) {
+        $protocols_pts = 0;
+      } else {
+        $result += 2;
+        $protocols_pts = 2;
+      }
     }
   } else {
-    if (scalar $accepted_protocols == 1 && grep {$_ eq 'TLSv1'} $accepted_protocols) {
-      $protocols_pts = 0;
+    if ($role eq 'ebanking') {
+      $result -= 2;
+      $protocols_pts = -2;
     } else {
-      $result += 2;
-      $protocols_pts = 2;
+      $result -= 1;
+      $protocols_pts = -1;
     }
   }
   $max_result += 2;
@@ -585,10 +599,10 @@ sub check_ssl {
       max_result   => $max_result,
       detail       => {
         cert       => { points => $certif_pts, expl => $certificate->{'not_after'}},
-        ciphers    => { points => $cipher_pts, expl => '', weak => $weak_ciphers, strong => $good_ciphers},
+        ciphers    => { points => $cipher_pts, expl => {weak => $percent_weak, strong => $percent_strong}, weak => $weak_ciphers, strong => $good_ciphers},
         country    => { points => $country_pts, expl => $country},
         flash      => { points => $flash_pts, expl => ''},
-        frames     => { points => $frame_pts, expl => ''},
+        frames     => { points => $frame_pts, expl => $frame_expl},
         pfs        => { points => $cipher_pfs_pts, expl => '', weak => $percent_weak_pfs, strong => $percent_strong_pfs},
         protocols  => { points => $protocols_pts, expl => $accepted_protocols},
         server     => { points => 0, expl => $server},
