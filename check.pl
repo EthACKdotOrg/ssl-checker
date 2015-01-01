@@ -11,13 +11,15 @@ use Net::DNS;
 use Net::Whois::IP qw(whoisip_query);
 use Term::ANSIColor qw(:constants);
 use JSON;
-use List::MoreUtils qw(first_index);
+use List::MoreUtils qw(first_index zip);
 use Perl::Version;
 use POSIX qw/strftime/;
+use Time::ParseDate;
 
 
 use lib 'lib';
 use ssl::heartbleed qw(check_heartbleed);
+#use ssl::beast qw(check_beast);
 
 my $file = './urls';
 my $csv = Text::CSV->new();
@@ -101,9 +103,9 @@ print FH $json_obj->pretty->encode($json);
 close FH;
 
 sub check {
-  my ($host) = @_;
+  my ($host, $role, $frontal) = @_;
 
-  print "Checking: ${host}\n";
+  print "Checking: ${host} (${role})\n";
 
   # are we sent to SSL web page?
   my $agent = $useragents[rand @useragents];
@@ -137,11 +139,11 @@ sub check {
     print " (${res_code})\n";
   }
 
-  check_ssl($host, $no_ssl_hash);
+  check_ssl($host, $no_ssl_hash, $role);
 }
 
 sub check_ssl {
-  my ($host, $no_ssl_hash) = @_;
+  my ($host, $no_ssl_hash, $role) = @_;
 
   my @ssl_versions = (
     'SSLv3',
@@ -218,6 +220,8 @@ sub check_ssl {
   my $sock;
   my $cert_checks = 0;
   my (
+    $beast_code,
+    $beast_msg,
     $certificate,
     $cipher,
     $ciphers_list,
@@ -272,6 +276,9 @@ sub check_ssl {
       print "  Checking Heartbleed…";
       ($heart_code, $heart_msg) = check_heartbleed($host, lc($ssl_version) );
       print " ${heart_msg}\n";
+      #print "  Checking BEAST…";
+      #($beast_code, $beast_msg) = check_beast($host);
+      #print " ${beast_status}\n";
 
       $good_ciphers->{$ssl_version} = [];
       $weak_ciphers->{$ssl_version} = [];
@@ -331,20 +338,274 @@ sub check_ssl {
 
   my $check_server = check_server($host);
 
+  my $result = 0;
+  my $max_result = 0;
+
+  ## PROCESS result
+  # certificate:
+  #     - front invalid: -1
+  #     - ebanking invalid: -2
+
+  my $end_certificate = parsedate($certificate->{'not_after'});
+  my $certif_pts = 0;
+  if ($end_certificate < time()) {
+    if ($role eq 'ebanking') {
+      $result -= 2;
+      $certif_pts = -2;
+    } else {
+      $result -= 1;
+      $certif_pts = -1;
+    }
+  }
+
+  #
+  # ciphers:
+  #     - majority of strong ciphers: +2
+  #     - majority of weak ciphers: 0
+
+  my @weak   = get_ciphers($weak_ciphers);
+  my @strong = get_ciphers($good_ciphers);
+  # ponderation
+  my $strongs = scalar (keys %{$ssl_ciphers{'good'}});
+  my $weaks = scalar (keys %{$ssl_ciphers{'weak'}});
+
+  my $ponderation = ($weaks*100/$strongs);
+  my $percent_weak = ( (scalar $weak[0]) * $ponderation / $weaks );
+  my $percent_strong = ( (scalar $strong[0]) * 100 / $strongs );
+
+  my $cipher_pts = 0;
+  if ($percent_strong > $percent_weak) {
+    $result += 2;
+    $cipher_pts = 2;
+  }
+  $max_result += 2;
+
+
+  # country:
+  #     - CH: +2
+  #     - US/UK: -1
+  #     - Other: 1
+
+  my $last_redirect = $check_server->[$#{$check_server}];
+  my $country = $last_redirect->{'plugins'}->{'Country'};
+  my $country_pts = 0;
+
+  if ($country->{'module'} eq 'CH') {
+    $result += 2;
+    $country_pts = 2;
+  } elsif (
+    $country->{'module'} eq 'GB'  ||
+    $country->{'module'} eq 'UK'  ||
+    $country->{'module'} eq 'US'  ||
+    $country->{'module'} eq 'USA'
+  ) {
+    $result -= 1;
+    $country_pts = -1;
+  } else {
+    $result += 1;
+    $country_pts = 1;
+  }
+  $max_result += 2;
+
+  #
+  # flash:
+  #     - present on front: -1
+  #     - present on ebanking: -2
+
+  my $flash_pts = 0;
+  if ($last_redirect->{'plugins'}->{'Adobe-Flash'}) {
+    if ($role eq 'ebanking') {
+      $result -= 2;
+      $flash_pts = -2;
+    } else {
+      $result -= 1;
+      $flash_pts = -1;
+    }
+  }
+
+  #
+  # frames:
+  #     - unprotected on front: -1
+  #     - unprotected on ebanking: -2
+
+  my $frame_pts = 0;
+  if ($last_redirect->{'plugins'}->{'Frame'}) {
+    if ($last_redirect->{'plugins'}->{'X-Frame-Options'}) {
+      if (!grep {$_ eq 'SAMEORIGIN'} @{$last_redirect->{'plugins'}->{'X-Frame-Options'}->{'string'}}) {
+        if ($role eq 'ebanking') {
+          $result -= 2;
+          $frame_pts = -2;
+        } else {
+          $result -= 1;
+          $frame_pts = -1;
+        }
+      }
+    } else {
+      if ($role eq 'ebanking') {
+        $result -= 2;
+        $frame_pts = -2;
+      } else {
+        $result -= 1;
+        $frame_pts = -1;
+      }
+    }
+  }
+
+  #
+  # pfs:
+  #     - majority of ciphers with PFS:
+  #             - over 60%: +2
+  #             - else: +1
+  #     - majority of ciphers without PFS: -1
+
+  my $pfs_weaks   = count_pfs($ssl_ciphers{'weak'});
+  my $pfs_strongs = count_pfs($ssl_ciphers{'good'});
+
+  $ponderation = ($pfs_weaks*100/$pfs_strongs);
+  my $percent_weak_pfs = ( (scalar $weak[1]) * $ponderation / $pfs_weaks );
+  my $percent_strong_pfs = ( (scalar $strong[1]) * 100 / $pfs_strongs );
+
+  my $cipher_pfs_pts = 0;
+  if ($percent_strong_pfs > $percent_weak_pfs) {
+    if ($percent_strong_pfs > 60) {
+      $result += 2;
+      $cipher_pfs_pts = 2;
+    } else {
+      $result += 1;
+      $cipher_pfs_pts = 1;
+    }
+  }
+  $max_result += 2;
+
+  #
+  # protocols:
+  #     - if SSLv3 absent
+  #             - if only TLSv1: +1
+  #             - if TLSv1, 11, 12: +2
+  #     - if SSLv3 present
+  #             - if only TLSv1: 0
+  #             - if TLSv1,11,12: +1
+  #     - if only SSLv3:
+  #             - front: -1
+  #             - ebanking: -2
+
+  my $protocols_pts = 0;
+  if (grep {$_ eq 'SSLv3'} $accepted_protocols) {
+    if (scalar $accepted_protocols == 1) {
+      if ($role eq 'ebanking') {
+        $result -= 2;
+        $protocols_pts = -2;
+      } else {
+        $result -= 1;
+        $protocols_pts = -1;
+      }
+    } elsif (scalar $accepted_protocols == 2) {
+      $result += 1;
+      $protocols_pts = 1;
+    } else {
+      $result += 2;
+      $protocols_pts = 2;
+    }
+  } else {
+    if (scalar $accepted_protocols == 1 && grep {$_ eq 'TLSv1'} $accepted_protocols) {
+      $protocols_pts = 0;
+    } else {
+      $result += 2;
+      $protocols_pts = 2;
+    }
+  }
+  $max_result += 2;
+
+  #
+  # server:
+  #     - no point
+
+  my $server = 'unknown';
+  if ($last_redirect->{'plugins'}->{'HTTPServer'}) {
+    $server = $last_redirect->{'plugins'}->{'HTTPServer'}->{'string'}->[0];
+  }
+
+  #
+  # ssl:
+  #     - redirected: +2
+  #     - only: +2
+  #     - optional: +1
+  #     - absent: -1
+
+  my $ssl_pts = 0;
+  my $ssl_expl;
+  if ($no_ssl_hash->{'clear_access'}) {
+    if ($last_redirect->{'target'} =~ /^https:/) {
+      $result += 2;
+      $ssl_pts = 2;
+      $ssl_expl = 'forced';
+    } elsif(scalar $accepted_protocols == 0) {
+      $result += -1;
+      $ssl_pts = -1;
+      $ssl_expl = 'absent';
+    } else {
+      $result += 1;
+      $ssl_pts = 1;
+      $ssl_expl = 'optional';
+    }
+  } else {
+    $result += 2;
+    $ssl_pts = 2;
+    $ssl_expl = 'only';
+  }
+  $max_result += 2;
+
+  #
+  # trackers:
+  #     -1 per detected tracker
+
+  my $trackers_pts = 0;
+  my $trackers = ();
+  if ($last_redirect->{'plugins'}->{'Google-Analytics'}) {
+    $result -= 1;
+    $trackers_pts += 1;
+    push @$trackers, 'Google Analytics';
+  }
+
+  if ($last_redirect->{'plugins'}->{'Google-API'}) {
+    $result -= 1;
+    $trackers_pts += 1;
+    push @$trackers, 'Google API';
+  }
+  
+
+
   $hash = {
-    certificate    => $certificate,
-    ciphers        => {
-      good         => $good_ciphers,
-      weak         => $weak_ciphers
-    },
-    default_cipher => $default_cipher,
-    ips            => $ips,
-    no_ssl         => $no_ssl_hash,
-    protocols      => $accepted_protocols,
-    server_info    => $check_server,
     ssl_cves       => {
       'heartbleed' => {code => $heart_code, msg => $heart_msg},
+      #'beast'      => {code => $beast_code, msg => $beast_msg},
     },
+    evaluation     => {
+      result       => $result,
+      max_result   => $max_result,
+      detail       => {
+        cert       => { points => $certif_pts, expl => $certificate->{'not_after'}},
+        ciphers    => { points => $cipher_pts, expl => '', weak => $weak_ciphers, strong => $good_ciphers},
+        country    => { points => $country_pts, expl => $country},
+        flash      => { points => $flash_pts, expl => ''},
+        frames     => { points => $frame_pts, expl => ''},
+        pfs        => { points => $cipher_pfs_pts, expl => '', weak => $percent_weak_pfs, strong => $percent_strong_pfs},
+        protocols  => { points => $protocols_pts, expl => $accepted_protocols},
+        server     => { points => 0, expl => $server},
+        ssl        => { points => $ssl_pts, expl => $ssl_expl},
+        trackers   => { points => $trackers_pts, expl => $trackers},
+      },
+    },
+    #certificate    => $certificate,
+    #ciphers        => {
+    #  good         => $good_ciphers,
+    #  weak         => $weak_ciphers
+    #},
+    #default_cipher => $default_cipher,
+    #ips            => $ips,
+    #no_ssl         => $no_ssl_hash,
+    #protocols      => $accepted_protocols,
+    #server_info    => $check_server,
   };
 
   return $hash;
@@ -419,4 +680,48 @@ sub check_server {
   }
   close FH;
   return $list;
+}
+
+sub merge_ciphers {
+  my ($merged) = @_;
+
+  my @output;
+  my @pfs;
+  my $pfs = 0;
+  my $cipher = '';
+
+  foreach (@$merged) {
+    $cipher = $_->{'cipher'};
+    if (!grep {$_ eq $cipher} @output) {
+      push @output, $cipher;
+      if ($_->{'pfs'} eq 'pfs') {
+        $pfs += 1;
+        push @pfs, $_->{'cipher'};
+      }
+    }
+  }
+
+  return (\@output, $pfs, \@pfs);
+}
+
+sub get_ciphers {
+  my ($data) = @_;
+
+  my @sslv3  = $data->{'SSLv3'}  || ();
+  my @tlsv1  = $data->{'TLSv1'}  || ();
+  my @tlsv11 = $data->{'TLSv11'} || ();
+  my @tlsv12 = $data->{'TLSv12'} || ();
+
+  my $merged = zip(@sslv3, @tlsv1, @tlsv11, @tlsv12);
+
+  return merge_ciphers($merged);
+}
+
+sub count_pfs {
+  my ($data) = @_;
+  my $pfs = 0;
+  while(my ($key, $value) = each(%$data)) {
+    $pfs += 1 if ($value eq 'pfs');
+  }
+  return $pfs
 }
