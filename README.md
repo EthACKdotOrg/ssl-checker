@@ -55,6 +55,7 @@ just an indication.
 * [Perl::Version](http://search.cpan.org/~bdfoy/Perl-Version-1.013/lib/Perl/Version.pm)
 * [Term::ANSIColor](http://search.cpan.org/~rra/Term-ANSIColor-4.03/lib/Term/ANSIColor.pm)
 * [Text::CSV](http://search.cpan.org/~makamaka/Text-CSV-1.32/lib/Text/CSV.pm)
+* [Time::ParseDate](http://search.cpan.org/~muir/Time-ParseDate-2013.1113/lib/Time/ParseDate.pm)
 
 
 ## Contribution
