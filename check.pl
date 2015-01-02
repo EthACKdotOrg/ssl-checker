@@ -42,7 +42,7 @@ my $json_obj = JSON->new;
 $json_obj->utf8(1);
 my $json_output = 'output.json';
 my $json = {};
-my $json_version = Perl::Version->new('1.0.2');
+my $json_version = Perl::Version->new('2.0.0');
 
 if (-e $json_output) {
   local $/;
@@ -348,7 +348,7 @@ sub check_ssl {
 
   my $end_certificate = parsedate($certificate->{'not_after'});
   my $certif_pts = 0;
-  if (scalar $accepted_protocols > 0) {
+  if (scalar @$accepted_protocols > 0) {
     if ($end_certificate < time()) {
       if ($role eq 'ebanking') {
         $result -= 2;
@@ -372,8 +372,8 @@ sub check_ssl {
   my $weaks = scalar (keys %{$ssl_ciphers{'weak'}});
 
   my $ponderation = ($weaks*100/$strongs);
-  my $percent_weak = ( (scalar $weak[0]) * $ponderation / $weaks );
-  my $percent_strong = ( (scalar $strong[0]) * 100 / $strongs );
+  my $percent_weak = ( (scalar @{$weak[0]}) * $ponderation / $weaks );
+  my $percent_strong = ( (scalar @{$strong[0]}) * 100 / $strongs );
 
   my $cipher_pts = 0;
   if ($percent_strong > $percent_weak) {
@@ -494,9 +494,9 @@ sub check_ssl {
   #             - ebanking: -2
 
   my $protocols_pts = 0;
-  if (scalar $accepted_protocols > 0) {
-    if (grep {$_ eq 'SSLv3'} $accepted_protocols) {
-      if (scalar $accepted_protocols == 1) {
+  if (scalar @$accepted_protocols > 0) {
+    if (grep {$_ eq 'SSLv3'} @$accepted_protocols) {
+      if (scalar @$accepted_protocols == 1) {
         if ($role eq 'ebanking') {
           $result -= 2;
           $protocols_pts = -2;
@@ -504,7 +504,7 @@ sub check_ssl {
           $result -= 1;
           $protocols_pts = -1;
         }
-      } elsif (scalar $accepted_protocols == 2) {
+      } elsif (scalar @$accepted_protocols == 2) {
         $result += 1;
         $protocols_pts = 1;
       } else {
@@ -512,7 +512,7 @@ sub check_ssl {
         $protocols_pts = 2;
       }
     } else {
-      if (scalar $accepted_protocols == 1 && grep {$_ eq 'TLSv1'} $accepted_protocols) {
+      if (scalar @$accepted_protocols == 1 && grep {$_ eq 'TLSv1'} @$accepted_protocols) {
         $protocols_pts = 0;
       } else {
         $result += 2;
@@ -599,7 +599,12 @@ sub check_ssl {
       max_result   => $max_result,
       detail       => {
         cert       => { points => $certif_pts, expl => $certificate->{'not_after'}},
-        ciphers    => { points => $cipher_pts, expl => {weak => $percent_weak, strong => $percent_strong}, weak => $weak_ciphers, strong => $good_ciphers},
+        ciphers    => {
+          points   => $cipher_pts,
+          expl     => {weak => $percent_weak, strong => $percent_strong},
+          weak     => $weak_ciphers,
+          strong   => $good_ciphers
+        },
         country    => { points => $country_pts, expl => $country},
         flash      => { points => $flash_pts, expl => ''},
         frames     => { points => $frame_pts, expl => $frame_expl},
@@ -610,13 +615,13 @@ sub check_ssl {
         trackers   => { points => $trackers_pts, expl => $trackers},
       },
     },
+    ips            => $ips,
     #certificate    => $certificate,
     #ciphers        => {
     #  good         => $good_ciphers,
     #  weak         => $weak_ciphers
     #},
     #default_cipher => $default_cipher,
-    #ips            => $ips,
     #no_ssl         => $no_ssl_hash,
     #protocols      => $accepted_protocols,
     #server_info    => $check_server,
