@@ -76,342 +76,128 @@ $.getJSON("./output.json", function(data) {
 
 function build_row(site, url, ebanking) {
 
-  site_result = build_tile(site, url);
-  ebank_result = new Array();
-  if (ebanking['ips'] != undefined) {
-    eb_site = site['ebanking'];
-    if (site['ebanking'] == 'self') {
-      eb_site = url;
-    }
-    ebank_result = build_tile(ebanking, eb_site);
-  }
+  var evaluation = site['evaluation'];
+  // get results from JSON
+  site_result = evaluation['result'];
+  max_result  = evaluation['max_result'];
+
   id = MD5(url);
   line = '<section id="'+id+'" >';
   line += '<h2><a name="'+id+'" href="#'+id+'"> '+site['bank_name']+'</a></h2>';
-  line += '<ul class="note"><li>'+site_result[1]+'/'+site_result[2]+'</li>';
-  if (ebank_result.length > 0) {
-    line += '<li>'+ebank_result[1]+'/'+ebank_result[2]+'</li>';
-  } else {
-    line += '<li>—</li>';
-  }
+  line += '<ul class="note"><li>'+site_result+'/'+max_result+'</li>';
+  // TODO: ebanking note
   line += '</ul>';
   line += '<ul class="bloc left">';
-  line += site_result[0];
+  // TODO: front
+  line += build_tile(evaluation, url);
   line += '</ul>';
   line += '<ul class="bloc right">';
-  if (ebank_result[0] != undefined) {
-    line += ebank_result[0];
+  if (site['ebanking'] != 'app') {
+    // TODO: ebanking results
+    line += build_tile(ebanking['evaluation'], site['ebanking']);
   } else {
     line += '<li><p>Application dédiée</p></li>';
-    line += '<li><p></p></li>';
-    line += '<li><p></p></li>';
-    line += '<li><p></p></li>';
-    line += '<li><p></p></li>';
-    line += '<li><p></p></li>';
-    line += '<li><p></p></li>';
+    line += '<li><p>—</p></li>';
+    line += '<li><p>—</p></li>';
+    line += '<li><p>—</p></li>';
+    line += '<li><p>—</p></li>';
+    line += '<li><p>—</p></li>';
+    line += '<li><p>—</p></li>';
   }
   line += '</ul>';
   line += '<button class="more" title="more" xattr="'+id+'"></button>';
   line += '<button class="more" title="less" xattr="'+id+'"></button>';
   line += '<div class="postContent hidding" xattr="'+id+'">';
-  line += '<ul class="bloc left"> blah';
+  line += '<ul class="bloc left">';
+  line += build_extended(site);
   line += '</ul>';
-  line += '<ul class="bloc right"> blah';
+  line += '<ul class="bloc right">';
+  if (site['ebanking'] != 'app') {
+    line += build_extended(ebanking);
+  }
   line += '</ul>';
   line += '</div>';
   line += '</section>';
 
   $('#banks').append(line);
 }
-
-function build_tile(site, url) {
-  result = 0;
-  result_max = 0;
-  // display web site URL
-  server_info = site['server_info'][(site['server_info'].length-1)];
-
-  // where is it hosted?
-  var bg_country = 'warning';
-  var country;
-  $.each(site['ips'], function(address, hash) {
-    if (hash['country'] != undefined) {
-      country = hash['country'];
-    } else if (hash['Country'] != undefined) {
-      country = hash['Country'];
-    }
-  });
-  if (
-      country == 'UNITED STATES' ||
-      country == 'USA' ||
-      country == 'US' ||
-      country == 'UK' ||
-      country == 'GB' ||
-      country == 'UNITED KINGDOM') {
-        bg_country = 'danger';
-      } else if(country == 'SWITZERLAND' || country == 'CH') {
-        bg_country = 'success';
-        result += 2;
-      } else {
-        result += 1;
-      }
-  result_max += 2;
-
-  var ips = Object.keys(site['ips']).join(', ');
-
-  // does it support SSL?
-  var ssl_support;
-  if (site['protocols'].length > 0) {
-    if (site['no_ssl']['clear_access'] == 'yes') {
-      if (server_info['target'].match(/^https:\/\//i)) {
-        ssl_support = '<i class="fa fa-lock"></i> oui, redirigé'
-        result += 2;
-      } else {
-        ssl_support = '<i class="fa fa-lock"></i> facultatif';
-        result += 1;
-      }
-    } else {
-      ssl_support = '<i class="fa fa-lock"></i> uniquement';
-      result += 2;
-    }
-  } else {
-    ssl_suppport = '<i class="fa fa-unlock"></i> non-disponible';
-  }
-  result_max += 2;
-
-  // server type
-  var server = '-';
-  if (server_info['plugins']['HTTPServer'] != undefined && 
-      server_info['plugins']['HTTPServer']['string'][0] != '') {
-    server = server_info['plugins']['HTTPServer']['string'][0];
-  }
-
-  if (site['protocols'].length == 0) {
-    bg = 'danger';
-    protos = 'aucun';
-  } else {
-    if (site['protocols'].indexOf('SSLv3') != -1) {
-      if (site['protocols'].length < 3) {
-        bg = 'danger';
-      } else {
-        bg = 'warning';
-        result += 1;
-      }
-    } else if(site['protocols'].length == 1 && site['protocols'].indexOf('TLSv1') != -1) {
-      bg = 'warning';
-      result += 1;
-    } else {
-      bg = 'success';
-      result += 2;
-    }
-    protos = site['protocols'].join(', ');
-  }
-  result_max += 2;
-
-  var cipher_support;
-  if (site['protocols'].length > 0) {
-    var weak = get_ciphers(site['ciphers'], 'weak');
-    var strong = get_ciphers(site['ciphers'], 'good');
-    ponderation = (27*100/30);
-    percent_weak = ((weak[0].length*ponderation/27)).toFixed(1);
-    percent_strong = ((strong[0].length*100/30)).toFixed(1);
-
-    if (parseInt(percent_weak) < parseInt(percent_strong)) {
-      result += 2;
-    }
-
-    cipher_support = percent_strong+'% forts, ';
-    cipher_support += percent_weak+'% faibles';
-  } else {
-    result -=1;
-  }
-  result_max += 2;
-
-  var pfs_support;
-  if (site['protocols'].length > 0) {
-    pfs_ponderation = (2*100/24);
-    percent_weak_pfs = ((weak[1]*pfs_ponderation/2)).toFixed(1);
-    percent_strong_pfs = ((strong[1]*100/24)).toFixed(1);
-    if (parseInt(percent_weak_pfs) < parseInt(percent_strong_pfs)) {
-      if (parseInt(percent_strong_pfs) > 60) {
-        result += 2;
-      } else {
-        result += 1;
-      }
-    }
-    pfs_support = percent_strong_pfs+'% forts, ';
-    pfs_support += percent_weak_pfs+'% faibles';
-  } else {
-  }
-  result_max += 2;
-
-  // trackers: remove points.
-  var trackers = new Array();
-  var tracking = false;
-  if (server_info['plugins']['Google-Analytics'] != undefined) {
-    if (site['role'] == 'ebanking') {
-      result -= 2;
-    } else {
-      result -= 1;
-    }
-    trackers.push('Google Analytics');
-    tracking = true;
-  }
-
-  if (server_info['plugins']['Google-API'] != undefined) {
-    if (site['role'] == 'ebanking') {
-      result -= 2;
-    } else {
-      result -= 1;
-    }
-    trackers.push('Google API');
-    tracking = true;
-  }
-
-  // Flash - remove point!
-  var flash = false;
-  if (server_info['plugins']['Adobe-Flash'] != undefined) {
-    if (site['role'] == 'ebanking') {
-      result -= 2;
-    } else {
-      result -= 1;
-    }
-    flash = true;
-  }
-
-  // Frame? If so, X-Frame-Options?
-  var framed = false;
-  var locked_frame = true;
-  if (server_info['plugins']['Frame'] != undefined) {
-    framed = true;
-    if (server_info['plugins']['X-Frame-Options'] != undefined) {
-      if (server_info['plugins']['X-Frame-Options']['string'].indexOf('SAMEORIGIN') != -1) {
-        locked_frame = true;
-      } else {
-        if (site['role'] == 'ebanking') {
-          result -= 2;
-        } else {
-          result -= 1;
-        }
-        locked_frame = false;
-      }
-    } else {
-      if (site['role'] == 'ebanking') {
-        result -= 2;
-      } else {
-        result -= 1;
-      }
-      locked_frame = false;
-    }
-  }
-
-  // Heartbleed: announced April 1, 2014 — has the SSL certificate been changed right after?
-  // NOTA: unable to know if server were really affected — so far, apache/nginx were, Windows stuff wasn't.
-  // Also, if they "re-keyed", the certificate validity doesn't change…
-  var certificate = '—';
-  if (site['certificate']['not_before'] != undefined) {
-    var start = new Date(site['certificate']['not_before']);
-    var end = new Date(site['certificate']['not_after']);
-    certificate = 'du '+start.getDate()+'.'+start.getMonth()+'.'+start.getFullYear();
-    certificate += ' au '+end.getDate()+'.'+end.getMonth()+'.'+end.getFullYear();
-
-    var now = new Date();
-    if (end.getTime() < now.getTime()) {
-      if (site['role'] == 'ebanking') {
-        result -= 2;
-      } else {
-        result -= 1;
-      }
-    }
-  }
-
-
-
+function build_tile(evaluation, url) {
   line = '<li><p>'+url+'</p></li>';
-  line += '<li><p>'+country+' ('+ips+')</p></li>';
-  if (ssl_support != undefined) {
-    line += '<li><p>'+ssl_support+'</p></li>';
+  if (evaluation['detail']['country'] != undefined) {
+    line += '<li><p>'+evaluation['detail']['country']['expl']['module']+'</p></li>';
   } else {
-    line += '<li><p>non</p></li>';
+    line += '<li><p>—</p></li>';
   }
-  line += '<li><p>'+certificate+'</p></li>';
-  line += '<li><p>'+server+'</p></li>';
-  if (site['protocols'] != undefined && site['protocols'].length > 0) {
-    line += '<li><p>'+site['protocols'].join(', ')+'</p></li>';
+  line += '<li><p>'+evaluation['detail']['ssl']['expl']+'</p></li>';
+  end = new Date(evaluation['detail']['cert']['expl']);
+  line += '<li><p>'+end.getDate()+'.'+end.getMonth()+'.'+end.getFullYear()+'</p></li>';
+  line += '<li><p>'+evaluation['detail']['server']['expl']+'</p></li>';
+  line += '<li><p>'+evaluation['detail']['protocols']['expl'].join(', ')+'</p></li>';
+  line += '<li><p></p></li>';
+  strong_percent = parseFloat(evaluation['detail']['pfs']['strong']).toFixed(1);
+  weak_percent   = parseFloat(evaluation['detail']['pfs']['weak']).toFixed(1);
+  line += '<li><p>'+strong_percent+'% forts, '+weak_percent+'% faibles</p></li>';
+  if (evaluation['detail']['trackers']['expl'] != null) {
+    line += '<li><p>'+evaluation['detail']['trackers']['expl'].join(', ')+'</p></li>';
   } else {
-    line += '<li><p>aucun</p></li>';
+    line += '<li><p>—</p></li>';
   }
-  if (cipher_support != undefined) {
-    line += '<li><p>'+cipher_support+'</p></li>';
+  if (evaluation['detail']['flash']['points'] != 0) {
+    line += '<li><p>Oui</p></li>';
   } else {
-    line += '<li><p>aucun</p></li>';
+    line += '<li><p>—</p></li>';
   }
-  if (pfs_support != undefined) {
-    line += '<li><p>'+pfs_support+'</p></li>';
-  } else {
-    line += '<li><p>aucun</p></li>';
-  }
-  if (tracking) {
-    line += '<li><p>'+trackers.length+' script(s)</p></li>';
-  } else {
-    line += '<li><p>aucun</p></li>';
-  }
-  if (flash) {
-    line += '<li><p>oui</p></li>';
-  } else {
-    line += '<li><p>non</p></li>';
-  }
-
-  if (framed) {
-    if (locked_frame) {
+  if (evaluation['detail']['frames']['expl'] == 'yes' ) {
+    if (evaluation['detail']['frames']['points']) {
       line += '<li><p>Oui, protégées</p></li>';
     } else {
-      line += '<li><p>Oui, NON protégées</p></li>';
+      line += '<li><p>Oui, non protégées</p></li>';
     }
   } else {
-    line += '<li><p>non</p></li>';
+    line += '<li><p>—</p></li>';
   }
+  return line;
+}
 
-  return new Array(line, result, result_max);
-}
-function merge_ciphers(ssl3, tls1, tls11, tls12) {
-  unique = new Array();
-  pfs = 0;
-  $.each(ssl3, function(key, hash) {
-    cipher = hash['cipher'];
-    if(unique.indexOf(cipher) == -1) { unique.push(cipher); if (hash['pfs'] == 'pfs') { pfs+=1;}}
+function build_extended(site) {
+  evaluation = site['evaluation'];
+  var line = '<li>Ciphers supportés ('+evaluation['detail']['ciphers']['points']+' points): <br>';
+  $.each(evaluation['detail']['ciphers']['weak'], function(proto, ciphers) {
+    line += proto+' (faibles)<ul>';
+    $.each(ciphers, function(hash) {
+      var pfs = 'PFS supporté';
+      if (ciphers[hash]['pfs'] == 'no_pfs') {
+        pfs = 'PFS non supporté';
+      }
+      line += '<li>'+ciphers[hash]['cipher']+' ('+pfs+')</li>';
+    })
+    line += '</ul>';
   });
-  $.each(tls1, function(key, hash) {
-    cipher = hash['cipher'];
-    if(unique.indexOf(cipher) == -1) { unique.push(cipher); if (hash['pfs'] == 'pfs') { pfs+=1;}}
+  $.each(evaluation['detail']['ciphers']['strong'], function(proto, ciphers) {
+    line += proto+' (forts)<ul>';
+    $.each(ciphers, function(hash) {
+      var pfs = 'PFS supporté';
+      if (ciphers[hash]['pfs'] == 'no_pfs') {
+        pfs = 'PFS non supporté';
+      }
+      line += '<li>'+ciphers[hash]['cipher']+' ('+pfs+')</li>';
+    })
+    line += '</ul>';
   });
-  $.each(tls11, function(key, hash) {
-    cipher = hash['cipher'];
-    if(unique.indexOf(cipher) == -1) { unique.push(cipher); if (hash['pfs'] == 'pfs') { pfs+=1;}}
+
+  line += 'Informations IP:<ul>';
+  line += '</ul>';
+  $.each(site['ips'], function(ip) {
+    line += '<li>'+ip+'<ul>';
+    $.each(site['ips'][ip], function(k, v) {
+      if (k.toLowerCase() != '% note' && k.toLowerCase() != 'remarks') {
+        line += '<li>'+k+': '+v+'</li>';
+      }
+    });
+    line += '</ul></li>';
   });
-  $.each(tls12, function(key, hash) {
-    cipher = hash['cipher'];
-    if(unique.indexOf(cipher) == -1) { unique.push(cipher); if (hash['pfs'] == 'pfs') { pfs+=1;}}
-  });
-  return new Array(unique, pfs);
-}
-function get_ciphers(hash, level) {
-  ssl3 = [];
-  tls1 = [];
-  tls11 = [];
-  tls12 = [];
-  if (hash[level] != undefined) {
-    if (hash['weak']['SSLv3'] != undefined) {
-      ssl3 = hash[level]['SSLv3'];
-    }
-    if (hash[level]['TLSv1'] != undefined) {
-      tls1 = hash[level]['TLSv1'];
-    }
-    if (hash[level]['TLSv11'] != undefined) {
-      tls11 = hash[level]['TLSv11'];
-    }
-    if (hash[level]['TLSv12'] != undefined) {
-      tls12 = hash[level]['TLSv12'];
-    }
-  }
-  return merge_ciphers(ssl3, tls1, tls11, tls12);
+
+  line += '</li>';
+
+  return line;
 }
