@@ -389,17 +389,31 @@ sub check_ssl {
   #     - Other: 1
 
   my $last_redirect = $check_server->[$#{$check_server}];
-  my $country = $last_redirect->{'plugins'}->{'Country'};
+
+  my $country = '';
+
+  while(my ($ip, $data) = each(%$ips)) {
+    if (exists $data->{'country'}) {
+      $country = $data->{'country'};
+    } elsif(exists $data->{'Country'}) {
+      $country = $data->{'Country'};
+    }
+  }
+  if ($country eq '') {
+    if ($last_redirect->{'plugins'}->{'Country'}) {
+      $country = $last_redirect->{'plugins'}->{'Country'}->{'module'};
+    }
+  }
   my $country_pts = 0;
 
-  if ($country->{'module'} eq 'CH') {
+  if ($country eq 'CH') {
     $result += 2;
     $country_pts = 2;
   } elsif (
-    $country->{'module'} eq 'GB'  ||
-    $country->{'module'} eq 'UK'  ||
-    $country->{'module'} eq 'US'  ||
-    $country->{'module'} eq 'USA'
+    $country eq 'GB'  ||
+    $country eq 'UK'  ||
+    $country eq 'US'  ||
+    $country eq 'USA'
   ) {
     $result -= 1;
     $country_pts = -1;
