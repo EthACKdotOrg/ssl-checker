@@ -126,17 +126,15 @@ sub check {
   };
   print "  HTTP access:";
 
-  $no_ssl_hash->{'clear_access'} = 'yes';
-  
-  if ($res_code == 200) {
+  if ($res_code >= 200 && $res_code < 300) {
     print RED,BOLD " OK\n", RESET;
-  } elsif ($res_code == 500) {
+  } elsif ($res_code >= 300 && $res_code < 400) {
+    print RED,BOLD " OK, with redirection(s)", RESET;
+    print " (${res_code})\n";
+  } else {
     print GREEN,BOLD " NO clear access", RESET;
     print " (timeout)\n";
     $no_ssl_hash->{'clear_access'} = 'no';
-  } else {
-    print RED,BOLD " OK, with redirection(s)", RESET;
-    print " (${res_code})\n";
   }
 
   check_ssl($host, $no_ssl_hash, $role);
@@ -243,15 +241,17 @@ sub check_ssl {
       PeerPort => "https",
 
       SSL_version            => $ssl_version,
-      SSL_honor_cipher_order => 0,
+      SSL_honor_cipher_order => 1,
 
       # certificate verification
-      SSL_verify_mode => SSL_VERIFY_PEER,
+      SSL_verify_mode => SSL_VERIFY_NONE,
       SSL_ca_path     => '/etc/ssl/certs', # typical CA path on Linux
-      SSL_verifycn_scheme => 'http'
+      #SSL_verifycn_scheme => 'http'
     );
 
     if ($sock && $sock->opened) {
+
+      print $sock "GET / HTTP/1.0\r\n\r\n";
 
       if (!$cert_checks) {
         $certificate = check_cert($host);
@@ -259,7 +259,7 @@ sub check_ssl {
       }
       $default_cipher = $sock->get_cipher();
 
-      $sock->close();
+      $sock->close(SSL_ctx_free => 1);
 
 
       print "  Trying ";
@@ -307,7 +307,7 @@ sub check_ssl {
               print GREEN "    ${cipher} OK (good, ${pfs})\n", RESET;
               push  @{$good_ciphers->{$ssl_version}}, {cipher => $cipher, pfs => $pfs};
             }
-            $sock->close();
+            $sock->close(SSL_ctx_free => 1);
           }
         }
       }
@@ -665,6 +665,12 @@ sub check_cert {
   my $key_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_pubkey_alg($server_cert));
   my $sign_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_signature_alg($server_cert));
 
+  my $match_cn = 'no';
+  if (grep {$_ eq $host} @altnames) {
+    $match_cn = 'yes';
+  } elsif (grep {$_ =~ /^\*\.${host}$/} @altnames) {
+    $match_cn = 'wildcard';
+  }
 
   my $match_root;
   if ($host =~ /^www\./) {
@@ -684,6 +690,7 @@ sub check_cert {
     alt_names  => \@altnames,
     issuer     => $issuer,
     key_algo   => $key_alg,
+    match_cn   => $match_cn,
     match_top  => $match_root,
     subject    => $subject,
     not_before => $not_before,
