@@ -406,7 +406,7 @@ sub check_ssl {
   }
   my $country_pts = 0;
 
-  if ($country eq 'CH') {
+  if ($country eq 'CH' || lc $country eq 'switzerland') {
     $result += 2;
     $country_pts = 2;
   } elsif (
@@ -446,8 +446,9 @@ sub check_ssl {
 
   my $frame_pts = 0;
   my $frame_expl = 'no';
-  if ($last_redirect->{'plugins'}->{'Frame'}) {
-    my $frame_expl = 'yes';
+  if (exists $last_redirect->{'plugins'}->{'Frame'}) {
+    print BOLD, "  Frame detected\n";
+    $frame_expl = 'yes';
     if ($last_redirect->{'plugins'}->{'X-Frame-Options'}) {
       if (!grep {$_ eq 'SAMEORIGIN'} @{$last_redirect->{'plugins'}->{'X-Frame-Options'}->{'string'}}) {
         if ($role eq 'ebanking') {
