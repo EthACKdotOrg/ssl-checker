@@ -85,15 +85,21 @@ function build_row(site, url, ebanking) {
   line = '<section id="'+id+'" >';
   line += '<h2><a name="'+id+'" href="#'+id+'"> '+site['bank_name']+'</a></h2>';
   line += '<ul class="note"><li>'+site_result+'/'+max_result+'</li>';
-  // TODO: ebanking note
+  // ebanking note
+  if (site['ebanking'] != 'app') {
+    eb_result = ebanking['evaluation']['result'];
+    line += '<li>'+eb_result+'/'+max_result+'</li>';
+  } else {
+    line += '<li>—</li>';
+  }
   line += '</ul>';
   line += '<ul class="bloc left">';
-  // TODO: front
+  // front
   line += build_tile(evaluation, url);
   line += '</ul>';
   line += '<ul class="bloc right">';
   if (site['ebanking'] != 'app') {
-    // TODO: ebanking results
+    // ebanking results
     line += build_tile(ebanking['evaluation'], site['ebanking']);
   } else {
     line += '<li><p>Application dédiée</p></li>';
@@ -124,7 +130,7 @@ function build_row(site, url, ebanking) {
 function build_tile(evaluation, url) {
   line = '<li><p>'+url+'</p></li>';
   if (evaluation['detail']['country'] != undefined) {
-    line += '<li><p>'+evaluation['detail']['country']['expl']['module']+'</p></li>';
+    line += '<li><p>'+evaluation['detail']['country']['expl']+'</p></li>';
   } else {
     line += '<li><p>—</p></li>';
   }
@@ -133,7 +139,11 @@ function build_tile(evaluation, url) {
   line += '<li><p>'+end.getDate()+'.'+end.getMonth()+'.'+end.getFullYear()+'</p></li>';
   line += '<li><p>'+evaluation['detail']['server']['expl']+'</p></li>';
   line += '<li><p>'+evaluation['detail']['protocols']['expl'].join(', ')+'</p></li>';
-  line += '<li><p></p></li>';
+  
+  strong_percent = parseFloat(evaluation['detail']['ciphers']['expl']['strong']).toFixed(1);
+  weak_percent   = parseFloat(evaluation['detail']['ciphers']['expl']['weak']).toFixed(1);
+  line += '<li><p>'+strong_percent+'% forts, '+weak_percent+'% faibles</p></li>';
+
   strong_percent = parseFloat(evaluation['detail']['pfs']['strong']).toFixed(1);
   weak_percent   = parseFloat(evaluation['detail']['pfs']['weak']).toFixed(1);
   line += '<li><p>'+strong_percent+'% forts, '+weak_percent+'% faibles</p></li>';
@@ -161,7 +171,22 @@ function build_tile(evaluation, url) {
 
 function build_extended(site) {
   evaluation = site['evaluation'];
-  var line = '<li>Ciphers supportés ('+evaluation['detail']['ciphers']['points']+' points): <br>';
+
+  var line = '<li>Détail de la note<ul>';
+  line += '<li>Certificat : '+evaluation['detail']['cert']['points']+'</li>';
+  line += '<li>Ciphers : '+evaluation['detail']['ciphers']['points']+'</li>';
+  line += '<li>Pays : '+evaluation['detail']['country']['points']+'</li>';
+  line += '<li>Flash : '+evaluation['detail']['flash']['points']+'</li>';
+  line += '<li>Frames : '+evaluation['detail']['frames']['points']+'</li>';
+  line += '<li>PFS : '+evaluation['detail']['pfs']['points']+'</li>';
+  line += '<li>Protocoles : '+evaluation['detail']['protocols']['points']+'</li>';
+  line += '<li>SSL : '+evaluation['detail']['ssl']['points']+'</li>';
+  line += '<li>Trackers : '+evaluation['detail']['trackers']['points']+'</li>';
+
+  line += '</ul></li>';
+
+
+  line += '<li>Ciphers supportés ('+evaluation['detail']['ciphers']['points']+' points): <br>';
   $.each(evaluation['detail']['ciphers']['weak'], function(proto, ciphers) {
     line += proto+' (faibles)<ul>';
     $.each(ciphers, function(hash) {
