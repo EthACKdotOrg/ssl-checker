@@ -1,79 +1,83 @@
-$.getJSON("./output.json", function(data) {
-  var sites = Object.keys(data);
-  var data_set = new Array();
-  sites.sort();
-  $.each(sites, function(s) {
-    site = data[sites[s]];
+$.getJSON('/index.json', function(data) {
+  // get latest generated JSON
+  var latest = data[data.length-1];
+  $('#update').html(latest);
 
-    if (site['role'] == 'front') {
-      data_set.push({url : sites[s], name: site['bank_name'], hash: MD5(sites[s])});
+  $.getJSON("/"+latest+".json", function(data) {
+    var sites = Object.keys(data);
+    var data_set = new Array();
+    sites.sort();
+    $.each(sites, function(s) {
+      site = data[sites[s]];
 
-      if (site['ebanking'] != 'app' && site['ebanking'] != 'self') {
-        var ebanking = data[site['ebanking']];
-        build_row(site, sites[s], ebanking);
-      } else if(site['ebanking'] == 'self') {
-        ebanking = site;
-        ebanking['role'] = 'ebanking';
-        build_row(site, sites[s], ebanking);
-      } else if (site['ebanking'] == 'app') {
-        build_row(site, sites[s], {});
+      if (site['role'] == 'front') {
+        data_set.push({url : sites[s], name: site['bank_name'], hash: MD5(sites[s])});
+
+        if (site['ebanking'] != 'app' && site['ebanking'] != 'self') {
+          var ebanking = data[site['ebanking']];
+          build_row(site, sites[s], ebanking);
+        } else if(site['ebanking'] == 'self') {
+          ebanking = site;
+          ebanking['role'] = 'ebanking';
+          build_row(site, sites[s], ebanking);
+        } else if (site['ebanking'] == 'app') {
+          build_row(site, sites[s], {});
+        }
+      }
+    });
+
+    $('#bankers').html(data_set.length);
+
+    var search = function(strs) {
+      return function findMatches(q, cb) {
+        var matches, substrRegex;
+        matches = [];
+        substrRegex = new RegExp(q, 'i');
+        $.each(strs, function(k, v) {
+          hash = strs[k];
+          if (substrRegex.test(hash['url']) || substrRegex.test(hash['name'])) {
+            if (matches.indexOf({value: hash['name'], hash: hash['hash']}) == -1) {
+              matches.push({value: hash['name'], hash: hash['hash']});
+            }
+          }
+        });
+        cb(matches);
       }
     }
-  });
 
-  $('#bankers').html(data_set.length);
-  $('#update').html(data['date']);
-
-  var search = function(strs) {
-    return function findMatches(q, cb) {
-      var matches, substrRegex;
-      matches = [];
-      substrRegex = new RegExp(q, 'i');
-      $.each(strs, function(k, v) {
-        hash = strs[k];
-        if (substrRegex.test(hash['url']) || substrRegex.test(hash['name'])) {
-          if (matches.indexOf({value: hash['name'], hash: hash['hash']}) == -1) {
-            matches.push({value: hash['name'], hash: hash['hash']});
-          }
-        }
-      });
-      cb(matches);
-    }
-  }
-
-  $('.typeahead').typeahead({
-    displayKey: 'val',
-    highlight: true,
-    hint: true,
-    minLength: 3
-  },
-  {
-    name: 'banks',
+    $('.typeahead').typeahead({
+      displayKey: 'val',
+      highlight: true,
+      hint: true,
+      minLength: 3
+    },
+    {
+      name: 'banks',
     source: search(data_set)
-  }).on('typeahead:selected', function(e, obj, dataset) {
-    location.hash = '#' + obj['hash'];
-    $('.typeahead').val('');
-  });
+    }).on('typeahead:selected', function(e, obj, dataset) {
+      location.hash = '#' + obj['hash'];
+      $('.typeahead').val('');
+    });
 
-  $('button[title="more"]').click(function(e) {
-    e.preventDefault();
-    $(this).hide();
-    var id = $(this).attr('xattr');
-    $('button[title="less"][xattr="'+id+'"]').show();
-    $('div[xattr="'+id+'"]').show();
-  });
+    $('button[title="more"]').click(function(e) {
+      e.preventDefault();
+      $(this).hide();
+      var id = $(this).attr('xattr');
+      $('button[title="less"][xattr="'+id+'"]').show();
+      $('div[xattr="'+id+'"]').show();
+    });
 
-  $('button[title="less"]').click(function(e) {
-    e.preventDefault();
-    $(this).hide();
-    var id = $(this).attr('xattr');
-    $('button[title="more"][xattr="'+id+'"]').show();
-    $('div[xattr="'+id+'"]').hide();
-    location.hash = '#'+id ;
-  });
+    $('button[title="less"]').click(function(e) {
+      e.preventDefault();
+      $(this).hide();
+      var id = $(this).attr('xattr');
+      $('button[title="more"][xattr="'+id+'"]').show();
+      $('div[xattr="'+id+'"]').hide();
+      location.hash = '#'+id ;
+    });
 
-}).done(function() { $('#loading').hide(); });
-
+  }).done(function() { $('#loading').hide(); });
+}).fail(function() {$('#loading').hide();});
 
 function build_row(site, url, ebanking) {
 
@@ -154,7 +158,7 @@ function build_tile(evaluation, url) {
   line += '<li><p>'+end.getDate()+'.'+end.getMonth()+'.'+end.getFullYear()+'</p></li>';
   line += '<li><p>'+evaluation['detail']['server']['expl']+'</p></li>';
   line += '<li><p>'+evaluation['detail']['protocols']['expl'].join(', ')+'</p></li>';
-  
+
   strong_percent = parseFloat(evaluation['detail']['ciphers']['expl']['strong']).toFixed(1);
   weak_percent   = parseFloat(evaluation['detail']['ciphers']['expl']['weak']).toFixed(1);
   line += '<li><p>'+strong_percent+'% forts, '+weak_percent+'% faibles</p></li>';
@@ -254,7 +258,7 @@ function build_extended(site) {
         ) {
           v = site['ips'][ip][el];
           line += '<li>'+el+': '+v+'</li>';
-      }
+        }
     });
     line += '</ul></li>';
   });
