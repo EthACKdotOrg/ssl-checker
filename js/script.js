@@ -64,12 +64,12 @@ $.getJSON("./output.json", function(data) {
   });
 
   $('button[title="less"]').click(function(e) {
-	/*window.location.hash = "top";*/
     e.preventDefault();
     $(this).hide();
     var id = $(this).attr('xattr');
     $('button[title="more"][xattr="'+id+'"]').show();
     $('div[xattr="'+id+'"]').hide();
+    location.hash = '#'+id ;
   });
 
 }).done(function() { $('#loading').hide(); });
@@ -129,13 +129,27 @@ function build_row(site, url, ebanking) {
   $('#banks').append(line);
 }
 function build_tile(evaluation, url) {
-  line = '<li><p>'+url+'</p></li>';
+  var line;
+  if (url == 'self') {
+    line = '<li><p>Identique à la banque</p></li>';
+  } else {
+    line = '<li><p>'+url+'</p></li>';
+  }
   if (evaluation['detail']['country'] != undefined) {
     line += '<li><p>'+evaluation['detail']['country']['expl']+'</p></li>';
   } else {
     line += '<li><p>—</p></li>';
   }
-  line += '<li><p>'+evaluation['detail']['ssl']['expl']+'</p></li>';
+
+  var translation = {
+    absent: 'absent',
+    forced: 'forcé',
+    optional: 'facultatif'
+  };
+
+
+
+  line += '<li><p>'+translation[evaluation['detail']['ssl']['expl']]+'</p></li>';
   end = new Date(evaluation['detail']['cert']['expl']);
   line += '<li><p>'+end.getDate()+'.'+end.getMonth()+'.'+end.getFullYear()+'</p></li>';
   line += '<li><p>'+evaluation['detail']['server']['expl']+'</p></li>';
@@ -159,7 +173,7 @@ function build_tile(evaluation, url) {
     line += '<li><p>—</p></li>';
   }
   if (evaluation['detail']['frames']['expl'] == 'yes' ) {
-    if (evaluation['detail']['frames']['points']) {
+    if (evaluation['detail']['frames']['points'] == 0) {
       line += '<li><p>Oui, protégées</p></li>';
     } else {
       line += '<li><p>Oui, non protégées</p></li>';
@@ -187,26 +201,35 @@ function build_extended(site) {
   line += '</ul></li>';
 
 
-  line += '<li>Ciphers supportés ('+evaluation['detail']['ciphers']['points']+' points): <br>';
-  $.each(evaluation['detail']['ciphers']['weak'], function(proto, ciphers) {
+  line += '<li>Ciphers supportés : <br>';
+  var protos = Object.keys(evaluation['detail']['ciphers']['weak']);
+  protos.sort();
+  $.each(protos, function(k) {
+    proto = protos[k];
+    ciphers = evaluation['detail']['ciphers']['weak'][proto];
     line += proto+' (faibles)<ul>';
     $.each(ciphers, function(hash) {
-      var pfs = 'PFS supporté';
+      var pfs = 'avec PFS';
       if (ciphers[hash]['pfs'] == 'no_pfs') {
-        pfs = 'PFS non supporté';
+        pfs = 'sans PFS';
       }
-      line += '<li>'+ciphers[hash]['cipher']+' ('+pfs+')</li>';
+      line += '<li>'+ciphers[hash]['cipher']+' <small><i>'+pfs+'</i></small></li>';
     })
     line += '</ul>';
   });
-  $.each(evaluation['detail']['ciphers']['strong'], function(proto, ciphers) {
+
+  protos = Object.keys(evaluation['detail']['ciphers']['strong']);
+  protos.sort();
+  $.each(protos, function(k) {
+    proto = protos[k];
+    ciphers = evaluation['detail']['ciphers']['strong'][proto];
     line += proto+' (forts)<ul>';
     $.each(ciphers, function(hash) {
-      var pfs = 'PFS supporté';
+      var pfs = 'avec PFS';
       if (ciphers[hash]['pfs'] == 'no_pfs') {
-        pfs = 'PFS non supporté';
+        pfs = 'sans PFS';
       }
-      line += '<li>'+ciphers[hash]['cipher']+' ('+pfs+')</li>';
+      line += '<li>'+ciphers[hash]['cipher']+' <small><i>'+pfs+'</i></small></li>';
     })
     line += '</ul>';
   });
@@ -215,9 +238,22 @@ function build_extended(site) {
   line += '</ul>';
   $.each(site['ips'], function(ip) {
     line += '<li>'+ip+'<ul>';
-    $.each(site['ips'][ip], function(k, v) {
-      if (k.toLowerCase() != '% note' && k.toLowerCase() != 'remarks') {
-        line += '<li>'+k+': '+v+'</li>';
+    ip_elements = Object.keys(site['ips'][ip]);
+    ip_elements.sort();
+    $.each(ip_elements, function(k) {
+      var el = ip_elements[k]
+      if (
+        el.toLowerCase() == 'country' ||
+        el.toLowerCase() == 'mnt-by'  ||
+        el.toLowerCase() == 'admin-c' ||
+        el.toLowerCase() == 'descr'   ||
+        el.toLowerCase() == 'netname' ||
+        el.toLowerCase() == 'role'    ||
+        el.toLowerCase() == 'org-name'||
+        el.toLowerCase() == 'org'
+        ) {
+          v = site['ips'][ip][el];
+          line += '<li>'+el+': '+v+'</li>';
       }
     });
     line += '</ul></li>';
