@@ -592,7 +592,7 @@ sub check_ssl {
   my $trackers = ();
   if ($last_redirect->{'plugins'}->{'Google-Analytics'}) {
     $result -= 1;
-    $trackers_pts += 1;
+    $trackers_pts -= 1;
     push @$trackers, 'Google Analytics';
   }
 
