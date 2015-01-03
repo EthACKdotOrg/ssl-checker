@@ -41,16 +41,20 @@ a:link,a:visited {color: /*#2184BD*/#D18114;text-decoration:none;}
 pre{
   border:solid 1px #ccc;
   border-radius: 4px;
-  background: #DCD6CD;
+  background: #e5e5e5;
   box-shadow: 0px 1px #FFF;
   color:#222;
   text-shadow: 0 1px #fff;
-  padding: 6px 12px;
+  padding: 14px 12px;
   text-indent:0;
   line-height:1.6em;
   font-size:1.2em;
   white-space:pre-wrap;
 }
+pre ul{
+  margin-bottom: 8px;
+}
+
 :focus {outline: 0;}
 img.wp-smiley {
   float: none;
@@ -294,8 +298,8 @@ ul.note{
   height:100%;
   padding:0;
   display:inline-block;
-  top: 0;
-  transform: translate(0 , -104%);
+  margin-top:-35%;
+  vertical-align: middle;
 }
 ul.note li{
   list-style:none;
@@ -319,10 +323,11 @@ ul.bloc{
   padding:0;
 }
 .hidding > ul.bloc{
-  width:calc(50% - 48px);
+  width:calc(50% - 32px);
   display:inline-block;
-  margin:16px 24px;
+  margin:16px 0 16px 22px;
   padding:0;
+  vertical-align: top;
 }
 ul.bloc li{
   padding:0;
