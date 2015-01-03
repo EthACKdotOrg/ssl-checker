@@ -64,6 +64,7 @@ $.getJSON("./output.json", function(data) {
   });
 
   $('button[title="less"]').click(function(e) {
+	/*window.location.hash = "top";*/
     e.preventDefault();
     $(this).hide();
     var id = $(this).attr('xattr');
@@ -111,18 +112,18 @@ function build_row(site, url, ebanking) {
     line += '<li><p>—</p></li>';
   }
   line += '</ul>';
-  line += '<button class="more" title="more" xattr="'+id+'"></button>';
-  line += '<button class="more" title="less" xattr="'+id+'"></button>';
   line += '<div class="postContent hidding" xattr="'+id+'">';
-  line += '<ul class="bloc left">';
+  line += '<ul class="bloc left"><pre>';
   line += build_extended(site);
-  line += '</ul>';
-  line += '<ul class="bloc right">';
+  line += '</pre></ul>';
+  line += '<ul class="bloc right"><pre>';
   if (site['ebanking'] != 'app') {
     line += build_extended(ebanking);
   }
-  line += '</ul>';
+  line += '</pre></ul>';
   line += '</div>';
+  line += '<button class="more" title="more" xattr="'+id+'"></button>';
+  line += '<button class="more" title="less" xattr="'+id+'"></button>';
   line += '</section>';
 
   $('#banks').append(line);
