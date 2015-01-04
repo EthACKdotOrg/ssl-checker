@@ -15,13 +15,40 @@ use List::MoreUtils qw(first_index zip);
 use Perl::Version;
 use POSIX qw/strftime/;
 use Time::ParseDate;
+use Getopt::Long;
+use File::Spec;
+
+
+my $url_file = './urls';
+my $output_dir = './';
+my $refresh = '';
+
+GetOptions (
+  'output=s' => \$output_dir,
+  'refresh'  => \$refresh,
+  'urls=s'   => \$url_file,
+);
+
+if (! -d $output_dir) {
+  die "Please create ${output_dir} first!";
+}
+
+if (! -x $output_dir) {
+  die "Apparently unable to write in ${output_dir}";
+}
+if (! -f $url_file) {
+  die "Apparently unable to read ${url_file}";
+}
+if (! -r $url_file) {
+  die "Apparently unable to read ${url_file}";
+}
+
 
 
 use lib 'lib';
 use ssl::heartbleed qw(check_heartbleed);
 #use ssl::beast qw(check_beast);
 
-my $file = './urls';
 my $csv = Text::CSV->new();
 
 my @useragents = (
@@ -40,11 +67,13 @@ my @useragents = (
 
 my $json_obj = JSON->new;
 $json_obj->utf8(1);
-my $json_output = 'output.json';
 my $json = {};
 my $json_version = Perl::Version->new('2.0.0');
+my $date = strftime "%Y-%m-%d", localtime;
 
-if (-e $json_output) {
+my $json_output = File::Spec->catfile($output_dir, "${date}.json");
+
+if (-f $json_output && !$refresh) {
   local $/;
   open FH, '<', $json_output or die $!;
   my $js = <FH>;
@@ -57,37 +86,32 @@ if (!exists $json->{'version'} or $json_version > Perl::Version->new($json->{'ve
   $json = {};
 }
 
-my $date = strftime "%Y-%m-%d", localtime;
 
 $json->{'version'} = $json_version->stringify();
 $json->{'date'} = $date;
 
-open my $fh,  '<:encoding(utf8)', $file or die $!;
+open my $fh,  '<:encoding(utf8)', $url_file or die $!;
 my ($front, $ebanking, $bank_name);
 while(my $row = $csv->getline($fh)) {
   $bank_name = $row->[0];
   $front = $row->[1];
 
-  if (!exists $json->{$front}) {
-    $json->{$front} = check($front, 'front');
+  if (!exists $json->{$front} || $refresh) {
+    $json->{$front} = check($front, 'front', '', $refresh);
     $json->{$front}->{'role'} = 'front';
     $json->{$front}->{'bank_name'} = $bank_name;
-  } else {
-    print "\n${front} already done\n";
   }
-  
+
   if (scalar @{$row} == 3) {
     $ebanking = $row->[2];
     if ($front ne $ebanking) {
-      if (!exists $json->{$ebanking}) {
-        $json->{$ebanking} = check($ebanking, 'ebanking', $front);
+      if (!exists $json->{$ebanking} || $refresh) {
+        $json->{$ebanking} = check($ebanking, 'ebanking', $front, $refresh);
         $json->{$ebanking}->{'role'} = 'ebanking';
         $json->{$ebanking}->{'bank'} = $front;
         $json->{$ebanking}->{'bank_name'} = $bank_name;
 
         $json->{$front}->{'ebanking'} = $ebanking;
-      } else {
-        print "\n${ebanking} already done\n";
       }
     } else {
       $json->{$front}->{'ebanking'} = 'self';
@@ -96,14 +120,30 @@ while(my $row = $csv->getline($fh)) {
     $json->{$front}->{'ebanking'} = 'app';
   }
 }
-close $file;
+close $url_file;
 
 open FH, '>', $json_output or die $!;
 print FH $json_obj->pretty->encode($json);
 close FH;
 
+# create/update json index
+my $index = File::Spec->catfile($output_dir, 'index.json');
+my $index_json = [];
+if (-e $index) {
+  local $/;
+  open FH, '<', $index or die $!;
+  my $js = <FH>;
+  $index_json = $json_obj->decode($js);
+  close FH;
+}
+
+push @$index_json, $date if (!grep {$_ eq $date} @$index_json);
+open FH, '>', $index or die $!;
+print FH $json_obj->pretty->encode($index_json);
+close FH;
+
 sub check {
-  my ($host, $role, $frontal) = @_;
+  my ($host, $role, $frontal, $refresh) = @_;
 
   print "Checking: ${host} (${role})\n";
 
@@ -124,24 +164,16 @@ sub check {
     redirect_to   => '',
     clear_access  => 'yes',
   };
-  print "  HTTP access:";
 
-  if ($res_code >= 200 && $res_code < 300) {
-    print RED,BOLD " OK\n", RESET;
-  } elsif ($res_code >= 300 && $res_code < 400) {
-    print RED,BOLD " OK, with redirection(s)", RESET;
-    print " (${res_code})\n";
-  } else {
-    print GREEN,BOLD " NO clear access", RESET;
-    print " (timeout)\n";
+  if ($res_code >= 500) {
     $no_ssl_hash->{'clear_access'} = 'no';
   }
 
-  check_ssl($host, $no_ssl_hash, $role);
+  check_ssl($host, $no_ssl_hash, $role, $refresh);
 }
 
 sub check_ssl {
-  my ($host, $no_ssl_hash, $role) = @_;
+  my ($host, $no_ssl_hash, $role, $refresh) = @_;
 
   my @ssl_versions = (
     'SSLv3',
@@ -262,20 +294,10 @@ sub check_ssl {
       $sock->close(SSL_ctx_free => 1);
 
 
-      print "  Trying ";
-      print BOLD $ssl_version, RESET;
-      if ($ssl_version eq 'SSLv3') {
-        print RED " success", RESET;
-      } else {
-        print GREEN " success", RESET;
-      }
       push @{$accepted_protocols}, $ssl_version ;
-      print " (with ".$default_cipher.")\n";
 
       # heartbleed
-      print "  Checking Heartbleed…";
       ($heart_code, $heart_msg) = check_heartbleed($host, lc($ssl_version) );
-      print " ${heart_msg}\n";
       #print "  Checking BEAST…";
       #($beast_code, $beast_msg) = check_beast($host);
       #print " ${beast_status}\n";
@@ -301,24 +323,13 @@ sub check_ssl {
           );
           if ($sock && $sock->opened) {
             if ($level eq 'weak') {
-              print RED "    ${cipher} OK (weak, ${pfs})\n", RESET;
               push  @{$weak_ciphers->{$ssl_version}}, {cipher => $cipher, pfs => $pfs};
             } else {
-              print GREEN "    ${cipher} OK (good, ${pfs})\n", RESET;
               push  @{$good_ciphers->{$ssl_version}}, {cipher => $cipher, pfs => $pfs};
             }
             $sock->close(SSL_ctx_free => 1);
           }
         }
-      }
-
-    } else {
-      print "  Trying ";
-      print BOLD $ssl_version, RESET;
-      if ($ssl_version eq 'SSLv3') {
-        print GREEN " failed\n", RESET;
-      } else {
-        print RED " failed\n", RESET;
       }
     }
   }
@@ -336,7 +347,7 @@ sub check_ssl {
     }
   }
 
-  my $check_server = check_server($host);
+  my $check_server = check_server($host, $refresh);
 
   my $result = 0;
   my $max_result = 0;
@@ -447,7 +458,6 @@ sub check_ssl {
   my $frame_pts = 0;
   my $frame_expl = 'no';
   if (exists $last_redirect->{'plugins'}->{'Frame'}) {
-    print BOLD, "  Frame detected\n";
     $frame_expl = 'yes';
     if ($last_redirect->{'plugins'}->{'X-Frame-Options'}) {
       if (!grep {$_ eq 'SAMEORIGIN'} @{$last_redirect->{'plugins'}->{'X-Frame-Options'}->{'string'}}) {
@@ -676,10 +686,8 @@ sub check_cert {
   if ($host =~ /^www\./) {
     my $_host = substr $host, 4;
     if (first_index { $_ eq $_host } @altnames) {
-      print GREEN "  Certificate matches ${_host}, good\n", RESET;
       $match_root = 'yes';
     } else {
-      print RED "  Certificate does NOT match ${_host}, confusing\n", RESET;
       $match_root = 'no';
     }
   } else {
@@ -700,14 +708,15 @@ sub check_cert {
 }
 
 sub check_server {
-  my ($host) = @_;
+  my ($host, $refresh) = @_;
 
-  if (!-e "./jsons/${host}.json") {
+  my $force = $refresh || 0;
+
+  if (!-e "./jsons/${host}.json" || $force) {
     my $agent = $useragents[rand @useragents];
     system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${host}.json", $host);
     open FHT, '<', "./jsons/${host}.json" or die $!;
     if (scalar @{[<FHT>]} == 0) {
-      print "  Trying SSL…\n";
       system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${host}.json", "https://${host}");
     }
     close FHT;
