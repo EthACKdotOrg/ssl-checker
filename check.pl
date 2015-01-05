@@ -19,14 +19,16 @@ use Getopt::Long;
 use File::Spec;
 
 
+my $help = '';
 my $url_file = './urls';
 my $output_dir = './';
 my $refresh = '';
 
 GetOptions (
-  'output=s' => \$output_dir,
-  'refresh'  => \$refresh,
-  'urls=s'   => \$url_file,
+  'help|h'     => \$help,
+  'output|o=s' => \$output_dir,
+  'refresh|r'  => \$refresh,
+  'urls|u=s'   => \$url_file,
 );
 
 if (! -d $output_dir) {
@@ -611,7 +613,7 @@ sub check_ssl {
     $trackers_pts += 1;
     push @$trackers, 'Google API';
   }
-  
+
 
 
   $hash = {
@@ -658,52 +660,57 @@ sub check_ssl {
 sub check_cert {
   my ($host) = @_;
   my ($p, $resp, $hdrs, $server_cert) = get_https3($host, 443, '/');
-  
-  my $issuer = Net::SSLeay::X509_NAME_oneline(
-    Net::SSLeay::X509_get_issuer_name($server_cert)
-  );
-  my $subject = Net::SSLeay::X509_NAME_oneline(
-    Net::SSLeay::X509_get_subject_name($server_cert)
-  );
-  my $not_before = Net::SSLeay::P_ASN1_TIME_get_isotime(
-    Net::SSLeay::X509_get_notBefore($server_cert)
-  );
-  my $not_after = Net::SSLeay::P_ASN1_TIME_get_isotime(
-    Net::SSLeay::X509_get_notAfter($server_cert)
-  );
-  my @altnames = Net::SSLeay::X509_get_subjectAltNames($server_cert);
-  my $key_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_pubkey_alg($server_cert));
-  my $sign_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_signature_alg($server_cert));
 
-  my $match_cn = 'no';
-  if (grep {$_ eq $host} @altnames) {
-    $match_cn = 'yes';
-  } elsif (grep {$_ =~ /^\*\.${host}$/} @altnames) {
-    $match_cn = 'wildcard';
-  }
+  my ($issuer, $subject, $not_before, $not_after, @altnames, $key_alg, $sign_alg, $match_cn, $match_root);
 
-  my $match_root;
-  if ($host =~ /^www\./) {
-    my $_host = substr $host, 4;
-    if (first_index { $_ eq $_host } @altnames) {
-      $match_root = 'yes';
-    } else {
-      $match_root = 'no';
+  if ($resp =~ /200|30[12]|40[0123]/) {
+
+    $issuer = Net::SSLeay::X509_NAME_oneline(
+      Net::SSLeay::X509_get_issuer_name($server_cert)
+    );
+    $subject = Net::SSLeay::X509_NAME_oneline(
+      Net::SSLeay::X509_get_subject_name($server_cert)
+    );
+    $not_before = Net::SSLeay::P_ASN1_TIME_get_isotime(
+      Net::SSLeay::X509_get_notBefore($server_cert)
+    );
+    $not_after = Net::SSLeay::P_ASN1_TIME_get_isotime(
+      Net::SSLeay::X509_get_notAfter($server_cert)
+    );
+    @altnames = Net::SSLeay::X509_get_subjectAltNames($server_cert);
+    $key_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_pubkey_alg($server_cert));
+    $sign_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_signature_alg($server_cert));
+
+    $match_cn = 'no';
+    if (grep {$_ eq $host} @altnames) {
+      $match_cn = 'yes';
+    } elsif (grep {$_ =~ /^\*\.${host}$/} @altnames) {
+      $match_cn = 'wildcard';
     }
-  } else {
-    $match_root = 'Not for subdomains';
+
+    $match_root;
+    if ($host =~ /^www\./) {
+      my $_host = substr $host, 4;
+      if (first_index { $_ eq $_host } @altnames) {
+        $match_root = 'yes';
+      } else {
+        $match_root = 'no';
+      }
+    } else {
+      $match_root = 'Not for subdomains';
+    }
   }
 
   return {
-    alt_names  => \@altnames,
-    issuer     => $issuer,
-    key_algo   => $key_alg,
-    match_cn   => $match_cn,
-    match_top  => $match_root,
-    subject    => $subject,
-    not_before => $not_before,
-    not_after  => $not_after,
-    sign_algo  => $sign_alg,
+    alt_names  => \@altnames  || (),
+    issuer     => $issuer     || '',
+    key_algo   => $key_alg    || '',
+    match_cn   => $match_cn   || '',
+    match_top  => $match_root || '',
+    subject    => $subject    || '',
+    not_before => $not_before || 0,
+    not_after  => $not_after  || 0,
+    sign_algo  => $sign_alg   || '',
   };
 }
 
