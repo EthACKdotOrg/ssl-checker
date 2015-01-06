@@ -108,7 +108,7 @@ function build_row(site, url, ebanking) {
     // ebanking results
     line += build_tile(ebanking['evaluation'], site['ebanking']);
   } else {
-    line += '<li><p>Application dédiée (ou site pas accessible)</p></li>';
+    line += '<li><p>— Aucun —</p></li>';
     line += '<li><p>—</p></li>';
     line += '<li><p>—</p></li>';
     line += '<li><p>—</p></li>';
