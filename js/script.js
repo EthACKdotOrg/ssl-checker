@@ -91,7 +91,8 @@ function build_row(site, url, ebanking) {
   line += '<h2><a name="'+id+'" href="#'+id+'"> '+site['bank_name']+'</a></h2>';
   line += '<ul class="note"><li>'+site_result+'/'+max_result+'</li>';
   // ebanking note
-  if (site['ebanking'] != 'app') {
+  console.log(site['ebanking']);
+  if (site['ebanking'] != undefined && site['ebanking'] != 'app') {
     eb_result = ebanking['evaluation']['result'];
     line += '<li>'+eb_result+'/'+max_result+'</li>';
   } else {
@@ -103,11 +104,15 @@ function build_row(site, url, ebanking) {
   line += build_tile(evaluation, url);
   line += '</ul>';
   line += '<ul class="bloc right">';
-  if (site['ebanking'] != 'app') {
+  if (site['ebanking'] != undefined && site['ebanking'] != 'app') {
     // ebanking results
     line += build_tile(ebanking['evaluation'], site['ebanking']);
   } else {
-    line += '<li><p>Application dédiée</p></li>';
+    line += '<li><p>Application dédiée (ou site pas accessible)</p></li>';
+    line += '<li><p>—</p></li>';
+    line += '<li><p>—</p></li>';
+    line += '<li><p>—</p></li>';
+    line += '<li><p>—</p></li>';
     line += '<li><p>—</p></li>';
     line += '<li><p>—</p></li>';
     line += '<li><p>—</p></li>';
@@ -121,7 +126,7 @@ function build_row(site, url, ebanking) {
   line += build_extended(site);
   line += '</pre></ul>';
   line += '<ul class="bloc right"><pre>';
-  if (site['ebanking'] != 'app') {
+  if (site['ebanking'] != undefined && site['ebanking'] != 'app') {
     line += build_extended(ebanking);
   }
   line += '</pre></ul>';
