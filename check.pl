@@ -580,7 +580,7 @@ sub check_ssl {
       $result += 2;
       $ssl_pts = 2;
       $ssl_expl = 'forced';
-    } elsif(scalar $accepted_protocols == 0) {
+    } elsif(scalar @$accepted_protocols == 0) {
       $result += -1;
       $ssl_pts = -1;
       $ssl_expl = 'absent';
