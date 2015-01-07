@@ -6,7 +6,8 @@ use Data::Dumper;
 use Text::CSV;
 use LWP::UserAgent;
 use IO::Socket::SSL;
-use Net::SSLeay qw(get_https3);
+use IO::Socket::INET;
+use Net::SSLeay;
 use Net::DNS;
 use Net::Whois::IP qw(whoisip_query);
 use Term::ANSIColor qw(:constants);
@@ -288,7 +289,7 @@ sub check_ssl {
       print $sock "GET / HTTP/1.0\r\n\r\n";
 
       if (!$cert_checks) {
-        $certificate = check_cert($host);
+        $certificate = check_cert($host, $useragents[rand @useragents]);
         $cert_checks = 1;
       }
       $default_cipher = $sock->get_cipher();
@@ -389,9 +390,12 @@ sub check_ssl {
   my $percent_strong = ( (scalar @{$strong[0]}) * 100 / $strongs );
 
   my $cipher_pts = 0;
-  if ($percent_strong > $percent_weak) {
-    $result += 2;
-    $cipher_pts = 2;
+
+  if (scalar @$accepted_protocols > 0) {
+    if ($percent_strong > $percent_weak) {
+      $result += 2;
+      $cipher_pts = 2;
+    }
   }
   $max_result += 2;
 
@@ -497,13 +501,15 @@ sub check_ssl {
   my $percent_strong_pfs = ( (scalar $strong[1]) * 100 / $pfs_strongs );
 
   my $cipher_pfs_pts = 0;
-  if ($percent_strong_pfs > $percent_weak_pfs) {
-    if ($percent_strong_pfs > 60) {
-      $result += 2;
-      $cipher_pfs_pts = 2;
-    } else {
-      $result += 1;
-      $cipher_pfs_pts = 1;
+  if (scalar @$accepted_protocols > 0) {
+    if ($percent_strong_pfs > $percent_weak_pfs) {
+      if ($percent_strong_pfs > 60) {
+        $result += 2;
+        $cipher_pfs_pts = 2;
+      } else {
+        $result += 1;
+        $cipher_pfs_pts = 1;
+      }
     }
   }
   $max_result += 2;
@@ -546,14 +552,6 @@ sub check_ssl {
         $protocols_pts = 2;
       }
     }
-  } else {
-    if ($role eq 'ebanking') {
-      $result -= 2;
-      $protocols_pts = -2;
-    } else {
-      $result -= 1;
-      $protocols_pts = -1;
-    }
   }
   $max_result += 2;
 
@@ -581,8 +579,13 @@ sub check_ssl {
       $ssl_pts = 2;
       $ssl_expl = 'forced';
     } elsif(scalar @$accepted_protocols == 0) {
-      $result += -1;
-      $ssl_pts = -1;
+      if ($role eq 'ebanking') {
+        $result -= 2;
+        $ssl_pts = -2;
+      } else {
+        $result -= 1;
+        $ssl_pts = -1;
+      }
       $ssl_expl = 'absent';
     } else {
       $result += 1;
@@ -658,48 +661,70 @@ sub check_ssl {
 }
 
 sub check_cert {
-  my ($host) = @_;
-  my ($p, $resp, $hdrs, $server_cert) = get_https3($host, 443, '/');
+  my ($host, $useragent) = @_;
+  
+  Net::SSLeay::initialize();
 
+  my $sock = IO::Socket::INET->new(PeerAddr=>"${host}:443") or die;
+
+  my $ctx = Net::SSLeay::CTX_tlsv1_new() or die;
+  my $ssl = Net::SSLeay::new($ctx) or die;
+  
+  Net::SSLeay::set_tlsext_host_name($ssl, $host);
+
+  Net::SSLeay::set_fd($ssl, fileno($sock)) or die;
+  Net::SSLeay::CTX_set_verify($ctx, 0x02);
+  Net::SSLeay::CTX_load_verify_locations($ctx, '/etc/ssl/certs/ca-certificates.crt', '/etc/ssl/certs/');
+
+  my $res = Net::SSLeay::connect($ssl);
+
+  my ($resp, $server_cert, $verify);
   my ($issuer, $subject, $not_before, $not_after, @altnames, $key_alg, $sign_alg, $match_cn, $match_root);
+  if ($res) {
+    $res = Net::SSLeay::do_handshake($ssl);
+    if ($res) {
+      $verify = Net::SSLeay::get_verify_result($ssl);
+      $server_cert = Net::SSLeay::get_peer_certificate($ssl);
+      $issuer = Net::SSLeay::X509_NAME_oneline(
+        Net::SSLeay::X509_get_issuer_name($server_cert)
+      );
+      $subject = Net::SSLeay::X509_NAME_oneline(
+        Net::SSLeay::X509_get_subject_name($server_cert)
+      );
+      $not_before = Net::SSLeay::P_ASN1_TIME_get_isotime(
+        Net::SSLeay::X509_get_notBefore($server_cert)
+      );
+      $not_after = Net::SSLeay::P_ASN1_TIME_get_isotime(
+        Net::SSLeay::X509_get_notAfter($server_cert)
+      );
+      @altnames = Net::SSLeay::X509_get_subjectAltNames($server_cert);
+      $key_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_pubkey_alg($server_cert));
+      $sign_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_signature_alg($server_cert));
 
-  if ($resp =~ /200|30[12]|40[0123]/) {
-
-    $issuer = Net::SSLeay::X509_NAME_oneline(
-      Net::SSLeay::X509_get_issuer_name($server_cert)
-    );
-    $subject = Net::SSLeay::X509_NAME_oneline(
-      Net::SSLeay::X509_get_subject_name($server_cert)
-    );
-    $not_before = Net::SSLeay::P_ASN1_TIME_get_isotime(
-      Net::SSLeay::X509_get_notBefore($server_cert)
-    );
-    $not_after = Net::SSLeay::P_ASN1_TIME_get_isotime(
-      Net::SSLeay::X509_get_notAfter($server_cert)
-    );
-    @altnames = Net::SSLeay::X509_get_subjectAltNames($server_cert);
-    $key_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_pubkey_alg($server_cert));
-    $sign_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_signature_alg($server_cert));
-
-    $match_cn = 'no';
-    if (grep {$_ eq $host} @altnames) {
-      $match_cn = 'yes';
-    } elsif (grep {$_ =~ /^\*\.${host}$/} @altnames) {
-      $match_cn = 'wildcard';
-    }
-
-    $match_root;
-    if ($host =~ /^www\./) {
-      my $_host = substr $host, 4;
-      if (first_index { $_ eq $_host } @altnames) {
-        $match_root = 'yes';
-      } else {
-        $match_root = 'no';
+      $match_cn = 'no';
+      if (grep {$_ eq $host} @altnames) {
+        $match_cn = 'yes';
+      } elsif (grep {$_ =~ /^\*\.${host}$/} @altnames) {
+        $match_cn = 'wildcard';
       }
-    } else {
-      $match_root = 'Not for subdomains';
+
+      if ($host =~ /^www\./) {
+        my $_host = substr $host, 4;
+        if (first_index { $_ eq $_host } @altnames) {
+          $match_root = 'yes';
+        } else {
+          $match_root = 'no';
+        }
+      } else {
+        $match_root = 'Not for subdomains';
+      }
     }
+  } else {
+    print "Error!\n";
   }
+
+  Net::SSLeay::clear($ssl);
+  Net::SSLeay::free($ssl);
 
   return {
     alt_names  => \@altnames  || (),
@@ -711,6 +736,7 @@ sub check_cert {
     not_before => $not_before || 0,
     not_after  => $not_after  || 0,
     sign_algo  => $sign_alg   || '',
+    verify     => $verify     || '',
   };
 }
 
