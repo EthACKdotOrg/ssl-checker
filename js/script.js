@@ -194,10 +194,54 @@ function build_tile(evaluation, url) {
 }
 
 function build_extended(site) {
+
+  var ssl_verification = {
+    '0':  'ok',
+    '2':  "Impossible d'obtenir l'émetteur du certificat",
+    '3':  "Impossible d'obtenir le CRL",
+    '4':  "Impossible de déchiffrer la signature du certificat",
+    '5':  "Impossible de déchiffrer la signature du CRL",
+    '6':  "Impossible de déchiffrer la clef publique de l'émetteur",
+    '7':  "Erreur de vérification de la signature du certificat",
+    '8':  "Erreur de vérification de la signature du CRL",
+    '9':  "Le certificat n'est pas encore valide",
+    '10': "Le certificat est expiré",
+    '11': "CRL pas encore valide",
+    '12': "CRL expiré",
+    '13': "Erreur de format de date (notBefore) (certificat)",
+    '14': "Erreur de format de date (notAfter) (certificat)",
+    '15': "Erreur de format de date (lastUpdate) (CRL)",
+    '16': "Erreur de format de date (nextUpdate) (CRL)",
+    '17': "Out of memory",
+    '18': "Certificat auto-signé",
+    '19': "Certificat auto-signé dans la chaîne de certificats",
+    '20': "Impossible d'obtenir le certificat de l'émetteur local",
+    '21': "Impossible de vérifier le premier certificat",
+    '22': "Chaîne de certificat trop longue",
+    '23': "Certificat révoqué",
+    '24': "Certificat CA invalide",
+    '25': "path length constraint exceeded",
+    '26': "unsupported certificate purpose",
+    '27': "Certificat non approuvé",
+    '28': "Certificat rejeté",
+    '29': "Incompatibilité de sujet émetteur",
+    '30': "authority and subject key identifier mismatch",
+    '31': "authority and issuer serial number mismatch",
+    '32': "key usage does not include certificate signing",
+    '50': "application verification failure"
+  }
+
+
+
   evaluation = site['evaluation'];
 
   var line = '<li>Détail de la note<ul>';
-  line += '<li>Certificat : '+evaluation['detail']['cert']['points']+'</li>';
+  line += '<li>Certificat : '+evaluation['detail']['cert']['points'];
+  if (site['certificate'] != undefined && site['certificate']['verify'] != undefined && site['certificate']['verify'] != 0) {
+    var i = site['certificate']['verify'];
+    line += ' '+ssl_verification[i];
+  }
+  line += '</li>';
   line += '<li>Ciphers : '+evaluation['detail']['ciphers']['points']+'</li>';
   line += '<li>Pays : '+evaluation['detail']['country']['points']+'</li>';
   line += '<li>Flash : '+evaluation['detail']['flash']['points']+'</li>';
