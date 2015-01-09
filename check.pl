@@ -318,9 +318,8 @@ sub check_ssl {
             SSL_honor_cipher_order => 0,
             SSL_cipher_list        => $cipher,
             # certificate verification
-            SSL_verify_mode => SSL_VERIFY_PEER,
+            SSL_verify_mode => SSL_VERIFY_NONE,
             SSL_ca_path     => '/etc/ssl/certs', # typical CA path on Linux
-            SSL_verifycn_scheme => 'http',
 
             Timeout => 3,
           );
@@ -363,7 +362,7 @@ sub check_ssl {
   my $end_certificate = parsedate($certificate->{'not_after'});
   my $certif_pts = 0;
   if (scalar @$accepted_protocols > 0) {
-    if ($end_certificate < time()) {
+    if ($end_certificate < time() || ($certificate->{'verify'} && $certificate->{'verify'} != 0)) {
       if ($role eq 'ebanking') {
         $result -= 2;
         $certif_pts = -2;
@@ -646,7 +645,7 @@ sub check_ssl {
       },
     },
     ips            => $ips,
-    #certificate    => $certificate,
+    certificate    => $certificate,
     #ciphers        => {
     #  good         => $good_ciphers,
     #  weak         => $weak_ciphers
@@ -747,10 +746,10 @@ sub check_server {
 
   if (!-e "./jsons/${host}.json" || $force) {
     my $agent = $useragents[rand @useragents];
-    system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${host}.json", $host);
+    system('./external/whatweb/whatweb', '-q', '--no-errors', '-a=3', "-U='${agent}'", "--log-json=./jsons/${host}.json", $host);
     open FHT, '<', "./jsons/${host}.json" or die $!;
     if (scalar @{[<FHT>]} == 0) {
-      system('./external/whatweb/whatweb', '-q', '-a=3', "-U='${agent}'", "--log-json=./jsons/${host}.json", "https://${host}");
+      system('./external/whatweb/whatweb', '-q', '--no-errors', '-a=3', "-U='${agent}'", "--log-json=./jsons/${host}.json", "https://${host}");
     }
     close FHT;
   }
