@@ -171,8 +171,12 @@ function build_tile(evaluation, url) {
 
 
   line += '<li><p>'+translation[evaluation['detail']['ssl']['expl']]+'</p></li>';
-  end = new Date(evaluation['detail']['cert']['expl']);
-  line += '<li><p>'+end.getDate()+'.'+end.getMonth()+'.'+end.getFullYear()+'</p></li>';
+  if (evaluation['detail']['ssl']['expl'] != 'absent') {
+    end = new Date(evaluation['detail']['cert']['expl']);
+    line += '<li><p>'+end.getDate()+'.'+end.getMonth()+'.'+end.getFullYear()+'</p></li>';
+  } else {
+    line += '<li><p>—</p></li>';
+  }
   line += '<li><p>'+evaluation['detail']['server']['expl']+'</p></li>';
   line += '<li><p>'+evaluation['detail']['protocols']['expl'].join(', ')+'</p></li>';
 
