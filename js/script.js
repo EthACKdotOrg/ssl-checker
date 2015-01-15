@@ -7,26 +7,39 @@ $.getJSON('/index.json', function(data) {
     var sites = Object.keys(data);
     var data_set = new Array();
     sites.sort();
+    var average_front = 0;
+    var average_ebanking = 0;
     $.each(sites, function(s) {
       site = data[sites[s]];
 
       if (site['role'] == 'front') {
-        data_set.push({url : sites[s], name: site['bank_name'], hash: MD5(sites[s])});
 
         if (site['ebanking'] != 'app' && site['ebanking'] != 'self') {
+          data_set.push({url : sites[s], name: site['bank_name'], hash: MD5(sites[s])});
           var ebanking = data[site['ebanking']];
           build_row(site, sites[s], ebanking);
+          
+          average_front += site['evaluation']['result'];
+          average_ebanking += ebanking['evaluation']['result'];
+
         } else if(site['ebanking'] == 'self') {
+          data_set.push({url : sites[s], name: site['bank_name'], hash: MD5(sites[s])});
           ebanking = site;
           ebanking['role'] = 'ebanking';
           build_row(site, sites[s], ebanking);
+          
+          average_front += site['evaluation']['result'];
+          average_ebanking += ebanking['evaluation']['result'];
+
         } else if (site['ebanking'] == 'app') {
-          build_row(site, sites[s], {});
+          //build_row(site, sites[s], {});
         }
       }
     });
 
     $('#bankers').html(data_set.length);
+    $('#average_front').html((average_front/data_set.length).toFixed(2));
+    $('#average_ebanking').html((average_ebanking/data_set.length).toFixed(2));
 
     var search = function(strs) {
       return function findMatches(q, cb) {
@@ -91,7 +104,6 @@ function build_row(site, url, ebanking) {
   line += '<h2><a name="'+id+'" href="#'+id+'"> '+site['bank_name']+'</a></h2>';
   line += '<ul class="note"><li>'+site_result+'/'+max_result+'</li>';
   // ebanking note
-  console.log(site['ebanking']);
   if (site['ebanking'] != undefined && site['ebanking'] != 'app') {
     eb_result = ebanking['evaluation']['result'];
     line += '<li>'+eb_result+'/'+max_result+'</li>';
