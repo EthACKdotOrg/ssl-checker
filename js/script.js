@@ -1,9 +1,9 @@
-$.getJSON('/index.json', function(data) {
+$.getJSON('/jsons/index.json', function(data) {
   // get latest generated JSON
   var latest = data[data.length-1];
   $('#update').html(latest);
 
-  $.getJSON("/"+latest+".json", function(data) {
+  $.getJSON("/jsons/"+latest+".json", function(data) {
     var sites = Object.keys(data);
     var data_set = new Array();
     sites.sort();
