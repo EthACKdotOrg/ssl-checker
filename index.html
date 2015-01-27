@@ -39,19 +39,19 @@
       <article id="banks">
       <section id="top" class="infos">
       <ul class="postContent">
-        Notation: le pays d'entrée, la disponibilité du SSL (avec redirection),
-        la liste des protocoles supportés ainsi que les ciphers et le support de
-        la <a href="https://fr.wikipedia.org/wiki/Confidentialit%C3%A9_persistante">confidentialité persistante</a>
-        comptent pour chacun 2 points maximum.<br>
-        L'absence de connexion SSL enlève un point.<br>
-        La présence de scripts de tracking (Google Analytics, etc) enlèvent un point, deux points si cela concerne la partie ebanking.<br>
-        La présence de Flash enlève un point, deux points si cela concerne la partie ebanking.<br>
-        La présence de frames sans protection enlève un point, deux points si cela concerne la partie ebanking.<br>
-        Un certificat SSL échu enlève un point, deux points si cela concerne la partie ebanking.<br>
+        <h3>Informations</h3>
+        Les tests ne se font que sur la connexion aux sites, en aucun cas sur la partie applicative.<br>
+        <i>Une mauvaise note ne veut pas dire que les données sont "en accès libre"</i> : tant qu'il y a du SSL/TLS,
+        les données sont chiffrées, et le cassage du chiffrement (décryptage) demandera des efforts (temps machine).<br>
+        Si le chiffrement est réputé faible, ça demandera "moins" de temps machine — mais cela reste hors de portée de votre voisin dans tous les cas.
       </ul>
       <ul class="postContent">
-        <p>Le site comporte <span id="bankers"></span> banques (dernière mise à jour: <span id="update"></span>).</p>
-        <p>La note moyenne est de <span id="average_front"></span> (site) et <span id="average_ebanking"></span> (e-banking)</p>
+        Les résultats vous inquiètent ? N'hésitez pas à contacter votre banque pour leur signaler que leur site n'offre pas les meilleures garanties
+        de confidentialité.
+      </ul>
+      <ul class="postContent">
+        Le site comporte <span id="bankers"></span> banques (dernière mise à jour: <span id="update"></span>).<br>
+        La note moyenne est de <span id="average_front"></span> (site) et <span id="average_ebanking"></span> (e-banking)
       </ul>
       </section>
       <nav id="loading"><p></p></nav>
