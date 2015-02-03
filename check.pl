@@ -12,7 +12,7 @@ use Net::DNS;
 use Net::Whois::IP qw(whoisip_query);
 use Term::ANSIColor qw(:constants);
 use JSON;
-use List::MoreUtils qw(first_index zip);
+use List::MoreUtils qw(first_index zip mesh);
 use Perl::Version;
 use POSIX qw/strftime/;
 use Time::ParseDate;
@@ -99,28 +99,31 @@ while(my $row = $csv->getline($fh)) {
   $bank_name = $row->[0];
   $front = $row->[1];
 
-  if (!exists $json->{$front} || $refresh) {
-    $json->{$front} = check($front, 'front', '', $refresh);
-    $json->{$front}->{'role'} = 'front';
-    $json->{$front}->{'bank_name'} = $bank_name;
-  }
+  if ($bank_name !~ /^#/) {
 
-  if (scalar @{$row} == 3) {
-    $ebanking = $row->[2];
-    if ($front ne $ebanking) {
-      if (!exists $json->{$ebanking} || $refresh) {
-        $json->{$ebanking} = check($ebanking, 'ebanking', $front, $refresh);
-        $json->{$ebanking}->{'role'} = 'ebanking';
-        $json->{$ebanking}->{'bank'} = $front;
-        $json->{$ebanking}->{'bank_name'} = $bank_name;
+    if (!exists $json->{$front} || $refresh) {
+      $json->{$front} = check($front, 'front', '', $refresh);
+      $json->{$front}->{'role'} = 'front';
+      $json->{$front}->{'bank_name'} = $bank_name;
+    }
 
-        $json->{$front}->{'ebanking'} = $ebanking;
+    if (scalar @{$row} == 3) {
+      $ebanking = $row->[2];
+      if ($front ne $ebanking) {
+        if (!exists $json->{$ebanking} || $refresh) {
+          $json->{$ebanking} = check($ebanking, 'ebanking', $front, $refresh);
+          $json->{$ebanking}->{'role'} = 'ebanking';
+          $json->{$ebanking}->{'bank'} = $front;
+          $json->{$ebanking}->{'bank_name'} = $bank_name;
+
+          $json->{$front}->{'ebanking'} = $ebanking;
+        }
+      } else {
+        $json->{$front}->{'ebanking'} = 'self';
       }
     } else {
-      $json->{$front}->{'ebanking'} = 'self';
+      $json->{$front}->{'ebanking'} = 'app';
     }
-  } else {
-    $json->{$front}->{'ebanking'} = 'app';
   }
 }
 close $url_file;
@@ -545,7 +548,7 @@ sub check_ssl {
       }
     } else {
       if (scalar @$accepted_protocols == 1 && grep {$_ eq 'TLSv1'} @$accepted_protocols) {
-        $protocols_pts = 0;
+        $protocols_pts = 1;
       } else {
         $result += 2;
         $protocols_pts = 2;
@@ -772,31 +775,34 @@ sub merge_ciphers {
   my $pfs = 0;
   my $cipher = '';
 
-  foreach (@$merged) {
-    $cipher = $_->{'cipher'};
-    if (!grep {$_ eq $cipher} @output) {
-      push @output, $cipher;
-      if ($_->{'pfs'} eq 'pfs') {
-        $pfs += 1;
-        push @pfs, $_->{'cipher'};
+  foreach my $sub (@$merged) {
+    if ($sub) {
+      foreach (@$sub) {
+        $cipher = $_->{'cipher'};
+        if (!grep {$_ eq $cipher} @output) {
+          push @output, $cipher;
+          if ($_->{'pfs'} eq 'pfs') {
+            $pfs += 1;
+            push @pfs, $_->{'cipher'};
+          }
+        }
       }
     }
   }
-
   return (\@output, $pfs, \@pfs);
 }
 
 sub get_ciphers {
   my ($data) = @_;
+  my @merged = ();
 
   my @sslv3  = $data->{'SSLv3'}  || ();
   my @tlsv1  = $data->{'TLSv1'}  || ();
   my @tlsv11 = $data->{'TLSv11'} || ();
   my @tlsv12 = $data->{'TLSv12'} || ();
 
-  my $merged = zip(@sslv3, @tlsv1, @tlsv11, @tlsv12);
-
-  return merge_ciphers($merged);
+  @merged = (@sslv3, @tlsv1, @tlsv11, @tlsv12);
+  return merge_ciphers(\@merged);
 }
 
 sub count_pfs {
