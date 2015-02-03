@@ -549,6 +549,7 @@ sub check_ssl {
     } else {
       if (scalar @$accepted_protocols == 1 && grep {$_ eq 'TLSv1'} @$accepted_protocols) {
         $protocols_pts = 1;
+        $result += 1;
       } else {
         $result += 2;
         $protocols_pts = 2;
