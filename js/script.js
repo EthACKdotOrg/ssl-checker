@@ -252,15 +252,21 @@ function build_extended(site) {
   evaluation = site['evaluation'];
 
   var line = '<li>Détail de la note<ul>';
+
+  var type = {
+    'id-ecPublicKey': 'ECC',
+    'rsaEncryption': 'RSA'
+  };
   if (evaluation['detail']['cert']['sign_algo'] != undefined) {
-    line += '<li>Certificat : ';
+
+    line += '<li>Certificat ('+ type[evaluation['detail']['cert']['key_algo']] +') : ';
     line += (
         evaluation['detail']['cert']['points'] +
         evaluation['detail']['cert']['sign_algo'] +
         evaluation['detail']['cert']['key_size']
         );
   } else {
-    line += '<li>Certificat : '+evaluation['detail']['cert']['points'];
+    line += '<li>Certificat ('+ type[site['certificate']['key_algo']] +') : '+evaluation['detail']['cert']['points'];
   }
 
   if (
