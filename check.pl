@@ -650,7 +650,12 @@ sub check_ssl {
       result       => $result,
       max_result   => $max_result,
       detail       => {
-        cert       => { points => $certif_pts, expl => $certificate->{'not_after'}},
+        cert       => {
+          points    => $certif_pts,
+          expl      => $certificate->{'not_after'},
+          sign_algo => $sign_algo_pts,
+          key_size  => $key_size_pts
+        },
         ciphers    => {
           points   => $cipher_pts,
           expl     => {weak => $percent_weak, strong => $percent_strong, malus => $cipher_malus },
@@ -665,7 +670,6 @@ sub check_ssl {
         server     => { points => 0, expl => $server},
         ssl        => { points => $ssl_pts, expl => $ssl_expl},
         trackers   => { points => $trackers_pts, expl => $trackers},
-        cert       => {sign_algo => $sign_algo_pts, key_size => $key_size_pts },
       },
     },
     ips            => $ips,
