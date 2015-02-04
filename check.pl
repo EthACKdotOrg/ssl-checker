@@ -210,7 +210,6 @@ sub check_ssl {
       'EXPORT56'                => 'no_pfs',
       'kECDH'                   => 'no_pfs',
       'KRB5'                    => 'no_pfs',
-      'LOW'                     => 'no_pfs',
       'MD5'                     => 'no_pfs',
       'PSK'                     => 'no_pfs',
       'RC4'                     => 'no_pfs',
@@ -284,7 +283,6 @@ sub check_ssl {
       # certificate verification
       SSL_verify_mode => SSL_VERIFY_NONE,
       SSL_ca_path     => '/etc/ssl/certs', # typical CA path on Linux
-      #SSL_verifycn_scheme => 'http'
     );
 
     if ($sock && $sock->opened) {
@@ -724,6 +722,17 @@ sub check_cert {
 
       my $pubkey = Net::SSLeay::X509_get_pubkey($server_cert);
       $key_size = Net::SSLeay::EVP_PKEY_bits($pubkey);
+
+      if ($key_alg eq 'id-ecPublicKey') {
+        my %conv = (
+          160 => 1024,
+          224 => 2048,
+          256 => 3072,
+          384 => 7680,
+          521 => 15360,
+        );
+        $key_size = $conv{$key_size};
+      }
       
 
       $match_cn = 'no';
