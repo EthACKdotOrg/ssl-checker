@@ -252,13 +252,32 @@ function build_extended(site) {
   evaluation = site['evaluation'];
 
   var line = '<li>Détail de la note<ul>';
-  line += '<li>Certificat : '+evaluation['detail']['cert']['points'];
-  if (site['certificate'] != undefined && site['certificate']['verify'] != undefined && site['certificate']['verify'] != 0) {
+  if (evaluation['detail']['cert']['sign_algo'] != undefined) {
+    line += '<li>Certificat : ';
+    line += (
+        evaluation['detail']['cert']['points'] +
+        evaluation['detail']['cert']['sign_algo'] +
+        evaluation['detail']['cert']['key_size']
+        );
+  } else {
+    line += '<li>Certificat : '+evaluation['detail']['cert']['points'];
+  }
+
+  if (
+      site['certificate'] != undefined &&
+      site['certificate']['verify'] != undefined &&
+      site['certificate']['verify'] != 0
+      ) {
     var i = site['certificate']['verify'];
     line += ' '+ssl_verification[i];
   }
   line += '</li>';
-  line += '<li>Ciphers : '+evaluation['detail']['ciphers']['points']+'</li>';
+  if (evaluation['detail']['ciphers']['malus'] != undefined) {
+    line += '<li>Ciphers : '+evaluation['detail']['ciphers']['points'] + evaluation['detail']['ciphers']['malus'];
+    line += ' (malus: '+evaluation['detail']['ciphers']['malus']+')</li>';
+  } else {
+    line += '<li>Ciphers : '+evaluation['detail']['ciphers']['points']+'</li>';
+  }
   line += '<li>Pays : '+evaluation['detail']['country']['points']+'</li>';
   line += '<li>Flash : '+evaluation['detail']['flash']['points']+'</li>';
   line += '<li>Frames : '+evaluation['detail']['frames']['points']+'</li>';
