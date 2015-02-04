@@ -392,12 +392,15 @@ sub check_ssl {
   my $percent_strong = ( (scalar @{$strong[0]}) * 100 / $strongs );
 
   my $cipher_pts = 0;
+  my $cipher_malus = ($weak[3] + $strong[3]);
 
   if (scalar @$accepted_protocols > 0) {
     if ($percent_strong > $percent_weak) {
       $result += 2;
       $cipher_pts = 2;
     }
+    $cipher_pts -= $cipher_malus;
+    $result -= $cipher_malus;
   }
   $max_result += 2;
 
@@ -620,6 +623,22 @@ sub check_ssl {
     push @$trackers, 'Google API';
   }
 
+  # certificate bis
+  # remove 0.5 if sign_algo isn't sha2
+  my $sign_algo_pts = 0;
+  $sign_algo_pts = -0.5 if ($certificate->{'sign_algo'} !~ /sha2/i);
+
+  # remove 0.5 if key_size < 4096, -1 if key_size < 2048
+  my $key_size = $certificate->{'key_size'};
+  my $key_size_pts = 0;
+  if ($key_size < 2048) {
+    $key_size_pts = -1;
+  } elsif ($key_size >= 2048 && $key_size < 4096) {
+    $key_size_pts = -0.5;
+  }
+
+  $result += ($key_size_pts + $sign_algo_pts);
+
 
 
   $hash = {
@@ -634,7 +653,7 @@ sub check_ssl {
         cert       => { points => $certif_pts, expl => $certificate->{'not_after'}},
         ciphers    => {
           points   => $cipher_pts,
-          expl     => {weak => $percent_weak, strong => $percent_strong},
+          expl     => {weak => $percent_weak, strong => $percent_strong, malus => $cipher_malus },
           weak     => $weak_ciphers,
           strong   => $good_ciphers
         },
@@ -646,18 +665,11 @@ sub check_ssl {
         server     => { points => 0, expl => $server},
         ssl        => { points => $ssl_pts, expl => $ssl_expl},
         trackers   => { points => $trackers_pts, expl => $trackers},
+        cert       => {sign_algo => $sign_algo_pts, key_size => $key_size_pts },
       },
     },
     ips            => $ips,
     certificate    => $certificate,
-    #ciphers        => {
-    #  good         => $good_ciphers,
-    #  weak         => $weak_ciphers
-    #},
-    #default_cipher => $default_cipher,
-    #no_ssl         => $no_ssl_hash,
-    #protocols      => $accepted_protocols,
-    #server_info    => $check_server,
   };
 
   return $hash;
@@ -681,7 +693,7 @@ sub check_cert {
 
   my $res = Net::SSLeay::connect($ssl);
 
-  my ($resp, $server_cert, $verify);
+  my ($resp, $server_cert, $verify, $key_size, $cipher_bits);
   my ($issuer, $subject, $not_before, $not_after, @altnames, $key_alg, $sign_alg, $match_cn, $match_root);
   if ($res) {
     $res = Net::SSLeay::do_handshake($ssl);
@@ -703,6 +715,12 @@ sub check_cert {
       @altnames = Net::SSLeay::X509_get_subjectAltNames($server_cert);
       $key_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_pubkey_alg($server_cert));
       $sign_alg = Net::SSLeay::OBJ_obj2txt(Net::SSLeay::P_X509_get_signature_alg($server_cert));
+
+      $cipher_bits = Net::SSLeay::get_cipher_bits($ssl);
+
+      my $pubkey = Net::SSLeay::X509_get_pubkey($server_cert);
+      $key_size = Net::SSLeay::EVP_PKEY_bits($pubkey);
+      
 
       $match_cn = 'no';
       if (grep {$_ eq $host} @altnames) {
@@ -730,16 +748,18 @@ sub check_cert {
   Net::SSLeay::free($ssl);
 
   return {
-    alt_names  => \@altnames  || (),
-    issuer     => $issuer     || '',
-    key_algo   => $key_alg    || '',
-    match_cn   => $match_cn   || '',
-    match_top  => $match_root || '',
-    subject    => $subject    || '',
-    not_before => $not_before || 0,
-    not_after  => $not_after  || 0,
-    sign_algo  => $sign_alg   || '',
-    verify     => $verify     || '',
+    alt_names  => \@altnames    || (),
+    cipher_bits => $cipher_bits || 0,
+    issuer     => $issuer       || '',
+    key_algo   => $key_alg      || '',
+    key_size   => $key_size     || 0,
+    match_cn   => $match_cn     || '',
+    match_top  => $match_root   || '',
+    subject    => $subject      || '',
+    not_before => $not_before   || 0,
+    not_after  => $not_after    || 0,
+    sign_algo  => $sign_alg     || '',
+    verify     => $verify       || '',
   };
 }
 
@@ -774,6 +794,7 @@ sub merge_ciphers {
   my @output;
   my @pfs;
   my $pfs = 0;
+  my $malus = 0.0;
   my $cipher = '';
 
   foreach my $sub (@$merged) {
@@ -782,6 +803,8 @@ sub merge_ciphers {
         $cipher = $_->{'cipher'};
         if (!grep {$_ eq $cipher} @output) {
           push @output, $cipher;
+          $malus += 1 if ($cipher =~ /^(rc4|3?des|md5)$/i);
+          $malus += 0.5 if ($cipher =~ /^sha1?$/i);
           if ($_->{'pfs'} eq 'pfs') {
             $pfs += 1;
             push @pfs, $_->{'cipher'};
@@ -790,7 +813,7 @@ sub merge_ciphers {
       }
     }
   }
-  return (\@output, $pfs, \@pfs);
+  return (\@output, $pfs, \@pfs, $malus);
 }
 
 sub get_ciphers {
