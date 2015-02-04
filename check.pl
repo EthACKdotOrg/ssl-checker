@@ -96,8 +96,8 @@ $json->{'date'} = $date;
 open my $fh,  '<:encoding(utf8)', $url_file or die $!;
 my ($front, $ebanking, $bank_name);
 while(my $row = $csv->getline($fh)) {
-  $bank_name = $row->[0];
-  $front = $row->[1];
+  $bank_name = trim($row->[0]);
+  $front = trim($row->[1]);
 
   if ($bank_name !~ /^#/) {
 
@@ -108,7 +108,7 @@ while(my $row = $csv->getline($fh)) {
     }
 
     if (scalar @{$row} == 3) {
-      $ebanking = $row->[2];
+      $ebanking = trim($row->[2]);
       if ($front ne $ebanking) {
         if (!exists $json->{$ebanking} || $refresh) {
           $json->{$ebanking} = check($ebanking, 'ebanking', $front, $refresh);
@@ -849,4 +849,10 @@ sub count_pfs {
     $pfs += 1 if ($value eq 'pfs');
   }
   return $pfs
+}
+
+sub trim {
+  my ($string) = @_;
+  $string =~ s/^\s+|\s+$//gm;
+  return $string;
 }
