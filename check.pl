@@ -120,7 +120,8 @@ open FH, '>', $index or die $!;
 print FH $json_obj->pretty->encode($index_json);
 close FH;
 
-
+# call sslyze in a way we can use its threading capabilities
+# well, not fully though, but… better than nothing.
 sub sslyze {
   my ($refresh, $name, $frontend, $backend) = @_;
 
@@ -185,6 +186,7 @@ sub cleanJson {
   return $json;
 }
 
+# convert sslyze XML to JSON
 sub xml2json {
   my ($xml_file) = @_;
 
@@ -202,7 +204,7 @@ sub xml2json {
   return cleanJson($json);
 }
 
-
+# remove trailing and leading spaces
 sub trim {
   my ($string) = @_;
   $string =~ s/^\s+|\s+$//gm;
