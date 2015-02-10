@@ -71,30 +71,30 @@ $json->{'version'} = $json_version->stringify();
 $json->{'date'} = $date;
 
 open my $fh,  '<:encoding(utf8)', $url_file or die $!;
-my ($front, $ebanking, $bank_name);
+my ($front, $ebanking, $bank_name, $result);
 while(my $row = $csv->getline($fh)) {
   $bank_name = trim($row->[0]);
   $front = trim($row->[1]);
 
   if ($bank_name !~ /^#/) {
 
-    if (!exists $json->{$front} || $refresh) {
-      #$json->{$front} = check($front, 'front', '', $refresh);
-      #$json->{$front}->{'role'} = 'front';
-      #$json->{$front}->{'bank_name'} = $bank_name;
+    if (!exists $json->{$bank_name} || $refresh) {
+      $json->{$bank_name}->{'frontend'} = $front;
 
       if (scalar @{$row} == 3) {
         $ebanking = trim($row->[2]);
         if ($front ne $ebanking) {
-          sslyze($refresh, $bank_name, $front, $ebanking);
+          $result = sslyze($refresh, $bank_name, $front, $ebanking);
+          $json->{$bank_name}->{'backend'} = $ebanking;
         } else {
-          #$json->{$front}->{'ebanking'} = 'self';
-          sslyze($refresh, $bank_name, $front);
+          $result = sslyze($refresh, $bank_name, $front);
+          $json->{$bank_name}->{'backend'} = 'self';
         }
       } else {
-        sslyze($refresh, $bank_name, $front);
-        #$json->{$front}->{'ebanking'} = 'app';
+        $result = sslyze($refresh, $bank_name, $front);
+        $json->{$bank_name}->{'backend'} = 'app';
       }
+      $json->{$bank_name}->{'results'} = $result;
     }
   }
 }
@@ -148,7 +148,41 @@ sub sslyze {
     system(@cmd);
   }
 
-  xml2json($xml_out);
+  return xml2json($xml_out);
+}
+
+# we want to keep only some elements.
+# for example, we want to remove the rejectedCipherSuites
+# as there is no use for our purpose.
+sub cleanJson {
+  my ($json) = @_;
+
+  delete $json->{'results'}->{'startTLS'};
+  delete $json->{'results'}->{'httpsTunnel'};
+  delete $json->{'results'}->{'defaultTimeout'};
+  delete $json->{'results'}->{'invalidTargets'};
+
+  eval {
+    my @array = @{$json->{'results'}->{'target'}} ;
+
+    foreach my $el (@array) {
+      delete $el->{'sslv2'}->{'rejectedCipherSuites'};
+      delete $el->{'sslv3'}->{'rejectedCipherSuites'};
+      delete $el->{'tlsv1'}->{'rejectedCipherSuites'};
+      delete $el->{'tlsv1_1'}->{'rejectedCipherSuites'};
+      delete $el->{'tlsv1_2'}->{'rejectedCipherSuites'};
+    }
+    1;
+  } or do {
+    my $el = $json->{'results'}->{'target'};
+    delete $el->{'sslv2'}->{'rejectedCipherSuites'};
+    delete $el->{'sslv3'}->{'rejectedCipherSuites'};
+    delete $el->{'tlsv1'}->{'rejectedCipherSuites'};
+    delete $el->{'tlsv1_1'}->{'rejectedCipherSuites'};
+    delete $el->{'tlsv1_2'}->{'rejectedCipherSuites'};
+  };
+
+  return $json;
 }
 
 sub xml2json {
@@ -157,10 +191,15 @@ sub xml2json {
   my $xml = new XML::Simple;
   my $data = $xml->XMLin($xml_file);
 
-  my $XML2JSON = XML::XML2JSON->new();
-  $XML2JSON->sanitize($data);
-  my $JSON = $XML2JSON->obj2json($data);
+  my $xml2js = XML::XML2JSON->new();
+  #$xml2js->sanitize($data);
+  my $json_str = $xml2js->obj2json($data);
 
+  my $json_obj = JSON->new;
+  $json_obj->utf8(1);
+
+  my $json = $json_obj->decode($json_str);
+  return cleanJson($json);
 }
 
 
