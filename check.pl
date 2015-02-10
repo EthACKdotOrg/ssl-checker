@@ -16,7 +16,7 @@ use XML::XML2JSON;
 use XML::Simple;
 
 use lib 'lib';
-use checks qw/has_sslv2 has_sslv3 has_rc4 has_des/;
+use checks;
 
 
 my $help = '';
@@ -167,12 +167,20 @@ sub compute {
     foreach my $el (@array) {
       $output{$el->{'host'}}{'sslv2'} = has_sslv2($el);
       $output{$el->{'host'}}{'sslv3'} = has_sslv3($el);
+      $output{$el->{'host'}}{'rc4'}   = has_rc4($el);
+      $output{$el->{'host'}}{'des'}   = has_des($el);
+      $output{$el->{'host'}}{'md5'}   = has_md5($el);
+      $output{$el->{'host'}}{'null'}  = has_null($el);
     }
     1;
   } or do {
     my $el = $json->{'results'}->{'target'};
     $output{$el->{'host'}}{'sslv2'} = has_sslv2($el);
     $output{$el->{'host'}}{'sslv3'} = has_sslv3($el);
+    $output{$el->{'host'}}{'rc4'}   = has_rc4($el);
+    $output{$el->{'host'}}{'des'}   = has_des($el);
+    $output{$el->{'host'}}{'md5'}   = has_md5($el);
+    $output{$el->{'host'}}{'null'}  = has_null($el);
   };
 
   $json->{'results'}->{'grades'} = \%output;
