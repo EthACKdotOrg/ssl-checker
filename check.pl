@@ -15,6 +15,9 @@ use Digest::SHA;
 use XML::XML2JSON;
 use XML::Simple;
 
+use lib 'lib';
+use checks qw/has_sslv2 has_sslv3 has_rc4 has_des/;
+
 
 my $help = '';
 my $url_file = './urls';
@@ -62,7 +65,6 @@ if (-f $json_output && !$refresh) {
 }
 
 if (!exists $json->{'version'} or $json_version > Perl::Version->new($json->{'version'})) {
-  print RED,BOLD "!!! Creating new JSON !!!\n\n", RESET;
   $json = {};
 }
 
@@ -152,6 +154,32 @@ sub sslyze {
   return xml2json($xml_out);
 }
 
+# do some computations based on the results we got from sslyze
+# also, fetch some other information in order to find more stuff
+sub compute {
+  my ($json) = @_;
+
+  my %output;
+
+  # multiple target?
+  eval {
+    my @array = @{$json->{'results'}->{'target'}} ;
+    foreach my $el (@array) {
+      $output{$el->{'host'}}{'sslv2'} = has_sslv2($el);
+      $output{$el->{'host'}}{'sslv3'} = has_sslv3($el);
+    }
+    1;
+  } or do {
+    my $el = $json->{'results'}->{'target'};
+    $output{$el->{'host'}}{'sslv2'} = has_sslv2($el);
+    $output{$el->{'host'}}{'sslv3'} = has_sslv3($el);
+  };
+
+  $json->{'results'}->{'grades'} = \%output;
+
+  return $json;
+}
+
 # we want to keep only some elements.
 # for example, we want to remove the rejectedCipherSuites
 # as there is no use for our purpose.
@@ -183,7 +211,7 @@ sub cleanJson {
     delete $el->{'tlsv1_2'}->{'rejectedCipherSuites'};
   };
 
-  return $json;
+  return compute($json);
 }
 
 # convert sslyze XML to JSON
