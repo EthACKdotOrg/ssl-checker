@@ -11,6 +11,9 @@ use Getopt::Long;
 use File::Spec;
 use Term::ANSIColor qw(:constants);
 use JSON;
+use Digest::SHA;
+use XML::XML2JSON;
+use XML::Simple;
 
 
 my $help = '';
@@ -79,24 +82,19 @@ while(my $row = $csv->getline($fh)) {
       #$json->{$front} = check($front, 'front', '', $refresh);
       #$json->{$front}->{'role'} = 'front';
       #$json->{$front}->{'bank_name'} = $bank_name;
-    }
 
-    if (scalar @{$row} == 3) {
-      $ebanking = trim($row->[2]);
-      if ($front ne $ebanking) {
-        if (!exists $json->{$ebanking} || $refresh) {
-          #$json->{$ebanking} = check($ebanking, 'ebanking', $front, $refresh);
-          #$json->{$ebanking}->{'role'} = 'ebanking';
-          #$json->{$ebanking}->{'bank'} = $front;
-          #$json->{$ebanking}->{'bank_name'} = $bank_name;
-
-          #$json->{$front}->{'ebanking'} = $ebanking;
+      if (scalar @{$row} == 3) {
+        $ebanking = trim($row->[2]);
+        if ($front ne $ebanking) {
+          sslyze($refresh, $bank_name, $front, $ebanking);
+        } else {
+          #$json->{$front}->{'ebanking'} = 'self';
+          sslyze($refresh, $bank_name, $front);
         }
       } else {
-        #$json->{$front}->{'ebanking'} = 'self';
+        sslyze($refresh, $bank_name, $front);
+        #$json->{$front}->{'ebanking'} = 'app';
       }
-    } else {
-      #$json->{$front}->{'ebanking'} = 'app';
     }
   }
 }
@@ -121,6 +119,49 @@ push @$index_json, $date if (!grep {$_ eq $date} @$index_json);
 open FH, '>', $index or die $!;
 print FH $json_obj->pretty->encode($index_json);
 close FH;
+
+
+sub sslyze {
+  my ($refresh, $name, $frontend, $backend) = @_;
+
+  my $ctx = Digest::SHA->new('sha256');
+  $ctx->add($name);
+  my $digest = $ctx->hexdigest;
+
+  my $xml_out = File::Spec->catfile('xmls', "${digest}.xml");
+
+  if (!-e $xml_out || $refresh) {
+
+    my @cmd = (
+      './external/sslyze/sslyze.py', 
+      '--regular',
+      '--xml_out',
+      $xml_out,
+      '--sni',
+      $frontend,
+      $frontend,
+    );
+    if ($backend) {
+      push @cmd, '--sni', $backend, $backend;
+    }
+
+    system(@cmd);
+  }
+
+  xml2json($xml_out);
+}
+
+sub xml2json {
+  my ($xml_file) = @_;
+
+  my $xml = new XML::Simple;
+  my $data = $xml->XMLin($xml_file);
+
+  my $XML2JSON = XML::XML2JSON->new();
+  $XML2JSON->sanitize($data);
+  my $JSON = $XML2JSON->obj2json($data);
+
+}
 
 
 sub trim {
