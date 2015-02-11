@@ -165,25 +165,33 @@ sub compute {
   eval {
     my @array = @{$json->{'results'}->{'target'}} ;
     foreach my $el (@array) {
-      $output{$el->{'host'}}{'sslv2'} = has_sslv2($el);
-      $output{$el->{'host'}}{'sslv3'} = has_sslv3($el);
-      $output{$el->{'host'}}{'rc4'}   = has_rc4($el);
-      $output{$el->{'host'}}{'des'}   = has_des($el);
-      $output{$el->{'host'}}{'md5'}   = has_md5($el);
-      $output{$el->{'host'}}{'null'}  = has_null($el);
+      $output{$el->{'host'}}{'sslv2'}       = has_sslv2($el);
+      $output{$el->{'host'}}{'sslv3'}       = has_sslv3($el);
+      $output{$el->{'host'}}{'rc4'}         = has_rc4($el);
+      $output{$el->{'host'}}{'des'}         = has_des($el);
+      $output{$el->{'host'}}{'md5'}         = has_md5($el);
+      $output{$el->{'host'}}{'null'}        = has_null($el);
+      $output{$el->{'host'}}{'key_size'}    = get_cert_info($el);
+      $output{$el->{'host'}}{'compression'} = $el->{'compression'}->{'compressionMethod'}->{'isSupported'};
+      $output{$el->{'host'}}{'ciphers'}     = get_ciphers($el);
+      $output{$el->{'host'}}{'preferredCiphers'}  = get_preferred($el);
     }
     1;
   } or do {
     my $el = $json->{'results'}->{'target'};
-    $output{$el->{'host'}}{'sslv2'} = has_sslv2($el);
-    $output{$el->{'host'}}{'sslv3'} = has_sslv3($el);
-    $output{$el->{'host'}}{'rc4'}   = has_rc4($el);
-    $output{$el->{'host'}}{'des'}   = has_des($el);
-    $output{$el->{'host'}}{'md5'}   = has_md5($el);
-    $output{$el->{'host'}}{'null'}  = has_null($el);
+    $output{$el->{'host'}}{'sslv2'}       = has_sslv2($el);
+    $output{$el->{'host'}}{'sslv3'}       = has_sslv3($el);
+    $output{$el->{'host'}}{'rc4'}         = has_rc4($el);
+    $output{$el->{'host'}}{'des'}         = has_des($el);
+    $output{$el->{'host'}}{'md5'}         = has_md5($el);
+    $output{$el->{'host'}}{'null'}        = has_null($el);
+    $output{$el->{'host'}}{'key_size'}    = get_cert_info($el);
+    $output{$el->{'host'}}{'compression'} = $el->{'compression'}->{'compressionMethod'}->{'isSupported'};
+    $output{$el->{'host'}}{'ciphers'}     = get_ciphers($el);
+    $output{$el->{'host'}}{'preferredCiphers'}  = get_preferred($el);
   };
 
-  $json->{'results'}->{'grades'} = \%output;
+  $json->{'results'} = \%output;
 
   return $json;
 }
@@ -229,7 +237,10 @@ sub xml2json {
   my $xml = new XML::Simple;
   my $data = $xml->XMLin($xml_file);
 
-  my $xml2js = XML::XML2JSON->new();
+  my $xml2js = XML::XML2JSON->new(
+    debug  => 0,
+    pretty => 0,
+  );
   #$xml2js->sanitize($data);
   my $json_str = $xml2js->obj2json($data);
 
