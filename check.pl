@@ -165,13 +165,14 @@ sub compute {
   eval {
     my @array = @{$json->{'results'}->{'target'}} ;
     foreach my $el (@array) {
+      $output{$el->{'host'}}{'response' }   = get_page_info($el->{'host'});
       $output{$el->{'host'}}{'sslv2'}       = has_sslv2($el);
       $output{$el->{'host'}}{'sslv3'}       = has_sslv3($el);
       $output{$el->{'host'}}{'rc4'}         = has_rc4($el);
       $output{$el->{'host'}}{'des'}         = has_des($el);
       $output{$el->{'host'}}{'md5'}         = has_md5($el);
       $output{$el->{'host'}}{'null'}        = has_null($el);
-      $output{$el->{'host'}}{'key_size'}    = get_cert_info($el);
+      $output{$el->{'host'}}{'key'}         = get_cert_info($el);
       $output{$el->{'host'}}{'compression'} = $el->{'compression'}->{'compressionMethod'}->{'isSupported'};
       $output{$el->{'host'}}{'ciphers'}     = get_ciphers($el);
       $output{$el->{'host'}}{'preferredCiphers'}  = get_preferred($el);
@@ -179,13 +180,14 @@ sub compute {
     1;
   } or do {
     my $el = $json->{'results'}->{'target'};
+    $output{$el->{'host'}}{'response' }   = get_page_info($el->{'host'});
     $output{$el->{'host'}}{'sslv2'}       = has_sslv2($el);
     $output{$el->{'host'}}{'sslv3'}       = has_sslv3($el);
     $output{$el->{'host'}}{'rc4'}         = has_rc4($el);
     $output{$el->{'host'}}{'des'}         = has_des($el);
     $output{$el->{'host'}}{'md5'}         = has_md5($el);
     $output{$el->{'host'}}{'null'}        = has_null($el);
-    $output{$el->{'host'}}{'key_size'}    = get_cert_info($el);
+    $output{$el->{'host'}}{'key'}         = get_cert_info($el);
     $output{$el->{'host'}}{'compression'} = $el->{'compression'}->{'compressionMethod'}->{'isSupported'};
     $output{$el->{'host'}}{'ciphers'}     = get_ciphers($el);
     $output{$el->{'host'}}{'preferredCiphers'}  = get_preferred($el);
