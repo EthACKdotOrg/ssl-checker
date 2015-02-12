@@ -222,7 +222,58 @@ sub compute {
     $output{$el->{'host'}}{'preferredCiphers'}  = get_preferred($el);
   };
 
-  #$json->{'results'} = \%output;
+  # do maths
+  my $grade = 0;
+  my $max_grade = 0;
+  while(my ($host, $values) = each(%output)) {
+
+    # preferred cipher: DH?
+    $values->{'grades'}->{'ciphers'}  = 0;
+    while(my ($proto, $d) = each(%{$values->{'preferredCiphers'}})) {
+      if ($d->{'type'} && $d->{'type'} =~ /^(EC)?DH$/) {
+        $grade += 0.5;
+        $values->{'grades'}->{'ciphers'}  += 0.5;
+        if ($d->{'type'} =~ /^DH$/ && $d->{'keySize'} >= 2048) {
+          $grade += 0.5;
+        }
+        if ($d->{'type'} =~ /^ECDH$/ && $d->{'keySize'} >= 256) {
+          $grade += 0.5;
+        }
+      }
+    }
+    $max_grade += 3; # only TLS have cool ciphers
+
+    # preferred ciphers: key size
+
+
+    # signature: SHA2?
+    $values->{'grades'}->{'signature'} = 0;
+    if ($values->{'key'}->{'signatureAlgorithm'} =~ /^sha2/i) {
+      $grade += 0.5;
+      $max_grade += 0.5;
+      $values->{'grades'}->{'signature'} = 0.5;
+    }
+
+    # key: 2048? more ?? :)
+    my @size = split ' ', $values->{'key'}->{'keySize'};
+    if ($size[0] < 1024) {
+      $grade -= 1;
+      $values->{'grades'}->{'keysize'} = -1;
+    } elsif ($size[0] < 2048) {
+      $grade -= 0.5;
+      $values->{'grades'}->{'keysize'} = -0.5;
+    } elsif ($size[0] < 4096) {
+      $values->{'grades'}->{'keysize'} = 0;
+    } else {
+      $grade += 0.5;
+      $values->{'grades'}->{'keysize'} = 0.5;
+    }
+    $max_grade += 0.5;
+
+
+    $values->{'grades'}->{'total'} = $grade;
+    $values->{'grades'}->{'max'} = $max_grade;
+  }
 
   return \%output;
 }
