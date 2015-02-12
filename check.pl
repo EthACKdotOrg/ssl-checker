@@ -14,6 +14,7 @@ use JSON;
 use Digest::SHA;
 use XML::XML2JSON;
 use XML::Simple;
+use IO::Socket::SSL;
 
 use lib 'lib';
 use checks;
@@ -81,22 +82,22 @@ while(my $row = $csv->getline($fh)) {
   if ($bank_name !~ /^#/) {
 
     if (!exists $json->{$bank_name} || $refresh) {
-      $json->{$bank_name}->{'frontend'} = $front;
+      $json->{'banks'}->{$bank_name}->{'frontend'} = $front;
 
       if (scalar @{$row} == 3) {
         $ebanking = trim($row->[2]);
         if ($front ne $ebanking) {
           $result = sslyze($refresh, $bank_name, $front, $ebanking);
-          $json->{$bank_name}->{'backend'} = $ebanking;
+          $json->{'banks'}->{$bank_name}->{'backend'} = $ebanking;
         } else {
           $result = sslyze($refresh, $bank_name, $front);
-          $json->{$bank_name}->{'backend'} = 'self';
+          $json->{'banks'}->{$bank_name}->{'backend'} = 'self';
         }
       } else {
         $result = sslyze($refresh, $bank_name, $front);
-        $json->{$bank_name}->{'backend'} = 'app';
+        $json->{'banks'}->{$bank_name}->{'backend'} = 'app';
       }
-      $json->{$bank_name}->{'results'} = $result;
+      $json->{'banks'}->{$bank_name}->{'results'} = $result;
     }
   }
 }
@@ -127,31 +128,59 @@ close FH;
 sub sslyze {
   my ($refresh, $name, $frontend, $backend) = @_;
 
+
   my $ctx = Digest::SHA->new('sha256');
   $ctx->add($name);
   my $digest = $ctx->hexdigest;
 
   my $xml_out = File::Spec->catfile('xmls', "${digest}.xml");
 
+  my $to_check = 0;
+
   if (!-e $xml_out || $refresh) {
+
+    my $sock = IO::Socket::SSL->new(
+      PeerHost        => $frontend,
+      PeerPort        => 'https',
+      SSL_verify_mode => SSL_VERIFY_NONE,
+      SSL_ca_path     => '/etc/ssl/certs',
+      Timeout         => 3,
+    );
 
     my @cmd = (
       './external/sslyze/sslyze.py', 
       '--regular',
       '--xml_out',
       $xml_out,
-      '--sni',
-      $frontend,
-      $frontend,
     );
-    if ($backend) {
-      push @cmd, '--sni', $backend, $backend;
+    
+    if ($sock && $sock->opened) {
+      print $sock "GET / HTTP/1.0\r\n\r\n";
+      $sock->close(SSL_ctx_free => 1);
+      push @cmd,'--sni', $frontend, $frontend;
+      $to_check = 1;
     }
 
-    system(@cmd);
+    if ($backend) {
+      $sock = IO::Socket::SSL->new(
+        PeerHost        => $backend,
+        PeerPort        => 'https',
+        SSL_verify_mode => SSL_VERIFY_NONE,
+        SSL_ca_path     => '/etc/ssl/certs',
+        Timeout         => 3,
+      );
+      if ($sock && $sock->opened) {
+        print $sock "GET / HTTP/1.0\r\n\r\n";
+        $sock->close(SSL_ctx_free => 1);
+        push @cmd, '--sni', $backend, $backend;
+        $to_check = 1;
+      }
+    }
+    system(@cmd) if ($to_check);
   }
 
-  return xml2json($xml_out);
+  return xml2json($xml_out) if ($to_check || -e $xml_out);
+  return {};
 }
 
 # do some computations based on the results we got from sslyze
@@ -193,9 +222,9 @@ sub compute {
     $output{$el->{'host'}}{'preferredCiphers'}  = get_preferred($el);
   };
 
-  $json->{'results'} = \%output;
+  #$json->{'results'} = \%output;
 
-  return $json;
+  return \%output;
 }
 
 # we want to keep only some elements.
