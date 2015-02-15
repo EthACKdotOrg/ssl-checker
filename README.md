@@ -32,6 +32,7 @@ just an indication.
 ## Dependencies
 * XML::Simple
 * XML::XML2JSON
+* Geo::IP
 
 
 ## Contribution
