@@ -3,29 +3,30 @@ use warnings;
 use utf8;
 
 use LWP::UserAgent;
+use Geo::IP;
+use Cwd;
 
-sub has_sslv2 {
+sub get_protocols {
   my ($el) = @_;
-  my $k = keys %{$el->{'sslv2'}->{'acceptedCipherSuites'}};
-
-  if ($k > 0) {
-    return (enabled => 1, reason => 'SSLv2 activé');
+  my @enabled;
+  my @disabled;
+  my %translate = (
+    sslv2 => 'SSLv2',
+    sslv3 => 'SSLv3',
+    tlsv1 => 'TLSv1',
+    tlsv1_1 => 'TLSv1.1',
+    tlsv1_2 => 'TLSv1.2',
+  );
+  foreach (qw/sslv2 sslv3 tlsv1 tlsv1_1 tlsv1_2/) {
+    push @enabled,  $translate{$_} if (exists $el->{$_} && keys %{$el->{$_}->{'acceptedCipherSuites'}} != 0);
+    push @disabled, $translate{$_} if (!exists $el->{$_} || keys %{$el->{$_}->{'acceptedCipherSuites'}} == 0);
   }
-  
-  return (enabled => 0);
-}
 
-sub has_sslv3 {
-  my ($el) = @_;
-  my $k = keys %{$el->{'sslv3'}->{'acceptedCipherSuites'}};
-  
-  if ($k > 0) {
-    return {enabled => 1, reason => 'SSLv3 activé'};
-  }
-  
-  return {enabled => 0};
+  return {
+    disabled => \@disabled,
+    enabled  => \@enabled,
+  };
 }
-
 sub has_rc4 {
   my ($el) = @_;
   my @acceptedCipher = keys %{$el->{'acceptedCipherSuites'}};
@@ -82,13 +83,24 @@ sub get_cert_info {
     $site_cert = $cert_chain;
   };
 
+  my $ocsp = 0;
+  if (
+    exists $el->{'certinfo'}->{'ocspStapling'}->{'responseStatus'} &&
+    $site_cert->{'ocspStapling'}->{'responseStatus'} eq 'successful'
+  ) {
+    $ocsp = 1;
+  }
+
   return {
-    signatureAlgorithm => $site_cert->{'signatureAlgorithm'},
+    altNames           => $site_cert->{'extensions'}->{'X509v3SubjectAlternativeName'}->{'listEntry'},
+    commonName         => $site_cert->{'subject'}->{'commonName'},
     issuer             => $site_cert->{'issuer'}->{'commonName'},
+    keySize            => $site_cert->{'subjectPublicKeyInfo'}->{'publicKeySize'},
     notAfter           => $site_cert->{'validity'}->{'notAfter'},
     notBefore          => $site_cert->{'validity'}->{'notBefore'},
-    keySize            => $site_cert->{'subjectPublicKeyInfo'}->{'publicKeySize'},
+    ocspStapling       => $ocsp,
     publicKeyAlgorithm => $site_cert->{'subjectPublicKeyInfo'}->{'publicKeyAlgorithm'},
+    signatureAlgorithm => $site_cert->{'signatureAlgorithm'},
   };
 }
 
@@ -103,18 +115,31 @@ sub get_ciphers {
 
   my (%ciphers, $tmp, @tmp);
   foreach my $proto (qw/sslv2 sslv3 tlsv1 tlsv1_1 tlsv1_2/) {
-    @tmp = keys %{$el->{$proto}->{'acceptedCipherSuites'}->{'cipherSuite'}};
-    foreach my $cipher (@tmp) {
-      $tmp = $el->{$proto}->{'acceptedCipherSuites'}->{'cipherSuite'}->{$cipher};
-      if (!$ciphers{$cipher}) {
-        $ciphers{$cipher} = {
-          keySize => $tmp->{'keySize'},
-          type    => $tmp->{'keyExchange'}->{'Type'},
-        };
+    eval {
+      @tmp = keys %{$el->{$proto}->{'acceptedCipherSuites'}->{'cipherSuite'}};
+      foreach my $cipher (@tmp) {
+        $tmp = $el->{$proto}->{'acceptedCipherSuites'}->{'cipherSuite'}->{$cipher};
+        if (!$ciphers{$cipher}) {
+          $ciphers{$cipher} = {
+            keySize => $tmp->{'keySize'},
+            type    => $tmp->{'keyExchange'}->{'Type'},
+          };
+        }
       }
-    }
+      1;
+    } or do {
+      $tmp = $el->{$proto}->{'acceptedCipherSuites'}->{'cipherSuite'};
+      if (!$ciphers{$tmp->{'name'}}) {
+        $ciphers{$tmp->{'name'}} = {
+          keySize => $tmp->{'keySize'},
+          type    => 'none',
+        };
+        if (exists $tmp->{'keyExchange'}) {
+          $ciphers{$tmp->{'name'}}{'type'} = $tmp->{'keyExchange'}->{'Type'};
+        }
+      }
+    };
   }
-
   return \%ciphers;  
 }
 
@@ -161,31 +186,35 @@ sub get_page_info {
   my $req = HTTP::Request->new('GET',"http://${host}/");
   my $res = $ua->request($req);
   my @redirects = $res->redirects;
-  if ($#redirects > 0) {
-    my @last_redir = $redirects[-2];
-    my @headers = $last_redir[0]->headers;
-    if ($headers[0]{'location'} =~ /^https:/i) {
-      $force_ssl = 1;
+  if ($res->code != 200) {
+    $force_ssl = 2;
+  } else {
+    if ($#redirects > 0) {
+      my @last_redir = $redirects[-2];
+      my @headers = $last_redir[0]->headers;
+      if ($headers[0]{'location'} =~ /^https:/i) {
+        $force_ssl = 1;
+      } else {
+        $force_ssl = 0;
+      }
     } else {
       $force_ssl = 0;
     }
-  } else {
-    $force_ssl = 0;
   }
   my $content = $res->content;
 
   # check if there is some shockwave/flash
-  my $has_flash = ($content =~ /<object/i);
+  my $has_flash = ($content =~ /\<object/i);
 
   # check if there are frames
   my $has_frame = ($content =~ /<i?frame/i);
-  my $x_frame_option = 0;
+  my $x_frame_option = '';
   if ($has_frame && $res->headers->{'x-frame-options'}) {
     $x_frame_option = $res->headers->{'x-frame-options'};
   }
 
   # check HSTS
-  my $hsts = 0;
+  my $hsts = '';
   if ($res->headers->{'strict-transport-security'}) {
     $hsts = $res->headers->{'strict-transport-security'};
   }
@@ -194,8 +223,19 @@ sub get_page_info {
     flash     => $has_flash      || 0,
     frame     => $has_frame      || 0,
     force_ssl => $force_ssl      || 0,
-    hsts      => $hsts           || 0,
-    xframeopt => $x_frame_option || '',
+    hsts      => $hsts,
+    xframeopt => $x_frame_option,
+  };
+}
+
+sub get_country {
+  my ($ip) = @_;
+  my $p = cwd();
+  my $gi = Geo::IP->open("${p}/external/GeoIP.dat", GEOIP_STANDARD);
+  my $record = $gi->country_code_by_addr($ip);
+  return {
+    code => $record,
+    ip   => $ip,
   };
 }
 
