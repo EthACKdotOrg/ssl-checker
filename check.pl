@@ -2,22 +2,24 @@
 
 use warnings;
 use strict;
-use Data::Dumper;
 use Text::CSV;
 use Perl::Version;
 use POSIX qw/strftime/;
 use Time::ParseDate;
 use Getopt::Long;
 use File::Spec;
+use File::Temp qw/tempfile/;
 use Term::ANSIColor qw(:constants);
 use JSON;
 use Digest::SHA;
 use XML::XML2JSON;
 use XML::Simple;
 use IO::Socket::SSL;
+use Time::ParseDate;
 
 use lib 'lib';
 use checks;
+use trackers;
 
 
 my $help = '';
@@ -133,11 +135,17 @@ sub sslyze {
   $ctx->add($name);
   my $digest = $ctx->hexdigest;
 
-  my $xml_out = File::Spec->catfile('xmls', "${digest}.xml");
+  my $json_out = File::Spec->catfile('xmls', "${digest}.json");
 
-  my $to_check = 0;
+  my ($backend_check, $frontend_check) = 0;
 
-  if (!-e $xml_out || $refresh) {
+  my $local_json = {};
+
+  if (!-e $json_out || $refresh) {
+    my $json_obj = JSON->new;
+    $json_obj->utf8(1);
+
+    my ($fh, $out_tmp) = tempfile();
 
     my $sock = IO::Socket::SSL->new(
       PeerHost        => $frontend,
@@ -151,17 +159,36 @@ sub sslyze {
       './external/sslyze/sslyze.py', 
       '--regular',
       '--xml_out',
-      $xml_out,
+      $out_tmp,
     );
     
     if ($sock && $sock->opened) {
       print $sock "GET / HTTP/1.0\r\n\r\n";
       $sock->close(SSL_ctx_free => 1);
       push @cmd,'--sni', $frontend, $frontend;
-      $to_check = 1;
+      $frontend_check = 1;
+    }
+    my $xml = new XML::Simple;
+    if ($frontend_check) {
+      system(@cmd);
+      my $tmpdata = $xml->XMLin($out_tmp);
+      my $xml2js = XML::XML2JSON->new(
+        debug  => 0,
+        pretty => 0,
+      );
+      my $tmp_json = $json_obj->decode($xml2js->obj2json($tmpdata));
+      push @{$local_json->{'results'}}, $tmp_json->{'results'}->{'target'};
     }
 
     if ($backend) {
+      ($fh, $out_tmp) = tempfile();
+      @cmd = (
+        './external/sslyze/sslyze.py', 
+        '--regular',
+        '--xml_out',
+        $out_tmp,
+      );
+
       $sock = IO::Socket::SSL->new(
         PeerHost        => $backend,
         PeerPort        => 'https',
@@ -173,15 +200,42 @@ sub sslyze {
         print $sock "GET / HTTP/1.0\r\n\r\n";
         $sock->close(SSL_ctx_free => 1);
         push @cmd, '--sni', $backend, $backend;
-        $to_check = 1;
+        $backend_check = 1;
       }
+      if ($backend_check) {
+        system(@cmd);
+        my $tmpdata = $xml->XMLin($out_tmp);
+        my $xml2js = XML::XML2JSON->new(
+          debug  => 0,
+          pretty => 0,
+        );
+        my $tmp_json = $json_obj->decode($xml2js->obj2json($tmpdata));
+        push @{$local_json->{'results'}}, $tmp_json->{'results'}->{'target'};
+      }
+      
     }
-    system(@cmd) if ($to_check);
+    if (keys %{$local_json}) {
+      open my $fh, '>:encoding(utf-8)', $json_out or die $!;
+      print $fh $json_obj->pretty->encode($local_json);
+      close $fh;
+    }
   }
 
-  return xml2json($xml_out) if ($to_check || -e $xml_out);
-  return {};
+  if ($frontend_check || $backend_check) {
+    return compute($local_json);
+  } elsif (-e $json_out) {
+    local $/;
+    open FH, '<', $json_out or die $!;
+    my $local_json = <FH>;
+    close FH;
+    $local_json = $json_obj->decode($local_json);
+    return compute($local_json);
+  } else {
+    print "${name}: no data\n";
+    return {};
+  }
 }
+
 
 # do some computations based on the results we got from sslyze
 # also, fetch some other information in order to find more stuff
@@ -189,29 +243,21 @@ sub compute {
   my ($json) = @_;
 
   my %output;
-
+  my @array;
+  #
   # multiple target?
   eval {
-    my @array = @{$json->{'results'}->{'target'}} ;
-    foreach my $el (@array) {
-      $output{$el->{'host'}}{'response' }   = get_page_info($el->{'host'});
-      $output{$el->{'host'}}{'sslv2'}       = has_sslv2($el);
-      $output{$el->{'host'}}{'sslv3'}       = has_sslv3($el);
-      $output{$el->{'host'}}{'rc4'}         = has_rc4($el);
-      $output{$el->{'host'}}{'des'}         = has_des($el);
-      $output{$el->{'host'}}{'md5'}         = has_md5($el);
-      $output{$el->{'host'}}{'null'}        = has_null($el);
-      $output{$el->{'host'}}{'key'}         = get_cert_info($el);
-      $output{$el->{'host'}}{'compression'} = $el->{'compression'}->{'compressionMethod'}->{'isSupported'};
-      $output{$el->{'host'}}{'ciphers'}     = get_ciphers($el);
-      $output{$el->{'host'}}{'preferredCiphers'}  = get_preferred($el);
-    }
+    @array = @{$json->{'results'}} ;
     1;
   } or do {
-    my $el = $json->{'results'}->{'target'};
+    push @array,  $json->{'results'};
+  };
+
+  foreach my $el (@array) {
+    $output{$el->{'host'}}{'country'}     = get_country($el->{'ip'});
     $output{$el->{'host'}}{'response' }   = get_page_info($el->{'host'});
-    $output{$el->{'host'}}{'sslv2'}       = has_sslv2($el);
-    $output{$el->{'host'}}{'sslv3'}       = has_sslv3($el);
+    $output{$el->{'host'}}{'trackers'}   = find_trackers($el->{'host'});
+    $output{$el->{'host'}}{'protocols'}   = get_protocols($el);
     $output{$el->{'host'}}{'rc4'}         = has_rc4($el);
     $output{$el->{'host'}}{'des'}         = has_des($el);
     $output{$el->{'host'}}{'md5'}         = has_md5($el);
@@ -220,12 +266,21 @@ sub compute {
     $output{$el->{'host'}}{'compression'} = $el->{'compression'}->{'compressionMethod'}->{'isSupported'};
     $output{$el->{'host'}}{'ciphers'}     = get_ciphers($el);
     $output{$el->{'host'}}{'preferredCiphers'}  = get_preferred($el);
-  };
+  }
 
-  # do maths
-  my $grade = 0;
-  my $max_grade = 0;
+  # do some maths
+  my ($grade, $max_grade);
   while(my ($host, $values) = each(%output)) {
+    my $grade = 0;
+    my $max_grade = 0;
+
+    # Tracking users?
+    $values->{'grades'}->{'trackers'} = 0;
+    if (scalar @{$values->{'trackers'}} == 0) {
+      $grade += 0.5;
+      $values->{'grades'}->{'trackers'} = 0.5;
+    }
+    $max_grade += 0.5;
 
     # preferred cipher: DH?
     $values->{'grades'}->{'ciphers'}  = 0;
@@ -234,25 +289,56 @@ sub compute {
         $grade += 0.5;
         $values->{'grades'}->{'ciphers'}  += 0.5;
         if ($d->{'type'} =~ /^DH$/ && $d->{'keySize'} >= 2048) {
+          $values->{'grades'}->{'ciphers'}  += 0.5;
           $grade += 0.5;
         }
         if ($d->{'type'} =~ /^ECDH$/ && $d->{'keySize'} >= 256) {
+          $values->{'grades'}->{'ciphers'}  += 0.5;
           $grade += 0.5;
         }
       }
     }
-    $max_grade += 3; # only TLS have cool ciphers
+    $max_grade += 3; # only TLS* have cool ciphers
 
-    # preferred ciphers: key size
+    # protocols
+    $values->{'grades'}->{'protocols'} = 0;
+    $values->{'grades'}->{'protocols'} += 0.5 if (grep {$_ eq 'TLSv1'} @{$values->{'protocols'}->{'enabled'}});
+    $values->{'grades'}->{'protocols'} += 0.5 if (grep {$_ eq 'TLSv1.1'} @{$values->{'protocols'}->{'enabled'}});
+    $values->{'grades'}->{'protocols'} += 0.5 if (grep {$_ eq 'TLSv1.2'} @{$values->{'protocols'}->{'enabled'}});
 
+    $values->{'grades'}->{'protocols'} -= 0.5 if (grep {$_ eq 'SSLv3'} @{$values->{'protocols'}->{'enabled'}});
+    $values->{'grades'}->{'protocols'} -= 0.5 if (grep {$_ eq 'SSLv3'} @{$values->{'protocols'}->{'enabled'}});
+
+    $grade += $values->{'grades'}->{'protocols'};
+    $max_grade += 1.5;
+
+    $max_grade += 1;
 
     # signature: SHA2?
     $values->{'grades'}->{'signature'} = 0;
     if ($values->{'key'}->{'signatureAlgorithm'} =~ /^sha2/i) {
       $grade += 0.5;
-      $max_grade += 0.5;
       $values->{'grades'}->{'signature'} = 0.5;
     }
+    $max_grade += 0.5;
+
+    # certificate still valid?
+    $values->{'grades'}->{'cert_validity'} = 0;
+    my $end_certificate = parsedate($values->{'key'}->{'notAfter'});
+    my $start_certificate = parsedate($values->{'key'}->{'notBefore'});
+    if ($end_certificate > time() && $start_certificate < time()) {
+      $values->{'grades'}->{'cert_validity'} = 1;
+      $grade += 1;
+    }
+    $max_grade += 1;
+
+    # certificate valid for used domain?
+    $values->{'grades'}->{'cert_match'} = 0;
+    if ($values->{'key'}->{'commonName'} eq $host) {
+      $grade += 1;
+      $values->{'grades'}->{'cert_match'} = 1;
+    }
+    $max_grade += 1;
 
     # key: 2048? more ?? :)
     my @size = split ' ', $values->{'key'}->{'keySize'};
@@ -263,12 +349,65 @@ sub compute {
       $grade -= 0.5;
       $values->{'grades'}->{'keysize'} = -0.5;
     } elsif ($size[0] < 4096) {
-      $values->{'grades'}->{'keysize'} = 0;
-    } else {
       $grade += 0.5;
       $values->{'grades'}->{'keysize'} = 0.5;
     }
     $max_grade += 0.5;
+
+    # HSTS ?
+    $values->{'grades'}->{'hsts'} = 0;
+    if ($values->{'response'}->{'hsts'} ne '') {
+      $values->{'grades'}->{'hsts'} = 1;
+      $grade += 1;
+    }
+    $max_grade += 1;
+
+    # enforce SSL?
+    $values->{'grades'}->{'enforce_ssl'} = 0;
+    if ($values->{'response'}->{'force_ssl'} > 0) {
+      $values->{'grades'}->{'enforce_ssl'} = 0.5;
+      $grade += 0.5;
+    }
+    $max_grade += 0.5;
+
+    # OCSP Stapling?
+    $values->{'grades'}->{'ocsp_stapling'} = 0;
+    if ($values->{'key'}{'ocspStapling'} != 0) {
+      $values->{'grades'}->{'ocsp_stapling'} = 0.5;
+      $grade += 0.5;
+    }
+    $max_grade += 0.5;
+
+    # Flash?
+    $values->{'grades'}->{'flash'} = 0;
+    if ($values->{'response'}{'flash'} == 0) {
+      $values->{'grades'}->{'flash'} = 0.5;
+      $grade += 0.5;
+    }
+    $max_grade += 0.5;
+
+    # Protected frame?
+    $values->{'grades'}->{'frames'} = 0;
+    if (
+      $values->{'response'}{'frame'} == 0 ||
+      $values->{'response'}{'xframeopt'} ne ''
+    ) {
+      $values->{'grades'}->{'frames'} = 0.5;
+      $grade += 0.5;
+    }
+    $max_grade += 0.5;
+
+    ## Country
+    # GeoIP isn't reliable.
+    #$values->{'grades'}->{'country'} = 0;
+    #if ($values->{'country'}->{'code'} eq 'CH') {
+    #  $grade += 1;
+    #  $values->{'grades'}->{'country'} = 1;
+    #} elsif($values->{'country'}->{'code'} =~ /US|UK|GB|AU|NZ|CA/) {
+    #  $grade -= 1;
+    #  $values->{'grades'}->{'country'} = -1;
+    #}
+    #$max_grade += 1;
 
 
     $values->{'grades'}->{'total'} = $grade;
@@ -310,27 +449,6 @@ sub cleanJson {
   };
 
   return compute($json);
-}
-
-# convert sslyze XML to JSON
-sub xml2json {
-  my ($xml_file) = @_;
-
-  my $xml = new XML::Simple;
-  my $data = $xml->XMLin($xml_file);
-
-  my $xml2js = XML::XML2JSON->new(
-    debug  => 0,
-    pretty => 0,
-  );
-  #$xml2js->sanitize($data);
-  my $json_str = $xml2js->obj2json($data);
-
-  my $json_obj = JSON->new;
-  $json_obj->utf8(1);
-
-  my $json = $json_obj->decode($json_str);
-  return cleanJson($json);
 }
 
 # remove trailing and leading spaces
