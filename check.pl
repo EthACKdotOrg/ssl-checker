@@ -306,7 +306,7 @@ sub compute {
     $values->{'grades'}->{'protocols'} += 0.5 if (grep {$_ eq 'TLSv1.1'} @{$values->{'protocols'}->{'enabled'}});
     $values->{'grades'}->{'protocols'} += 0.5 if (grep {$_ eq 'TLSv1.2'} @{$values->{'protocols'}->{'enabled'}});
 
-    $values->{'grades'}->{'protocols'} -= 0.5 if (grep {$_ eq 'SSLv3'} @{$values->{'protocols'}->{'enabled'}});
+    $values->{'grades'}->{'protocols'} -= 0.5 if (grep {$_ eq 'SSLv2'} @{$values->{'protocols'}->{'enabled'}});
     $values->{'grades'}->{'protocols'} -= 0.5 if (grep {$_ eq 'SSLv3'} @{$values->{'protocols'}->{'enabled'}});
 
     $grade += $values->{'grades'}->{'protocols'};
