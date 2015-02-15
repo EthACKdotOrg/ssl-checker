@@ -40,19 +40,72 @@
       <section id="top" class="infos">
       <ul class="postContent">
         <h3>Informations</h3>
-        Les tests ne se font que sur la connexion aux sites, en aucun cas sur la partie applicative.<br>
-        <i>Une mauvaise note ne veut pas dire que les données sont "en accès libre"</i> : tant qu'il y a du SSL/TLS,
-        les données sont chiffrées, et le cassage du chiffrement (décryptage) demandera des efforts (temps machine).<br>
-        Si le chiffrement est réputé faible, ça demandera "moins" de temps machine — mais cela reste hors de portée de votre voisin dans tous les cas.
-      </ul>
-      <ul class="postContent">
-        Les résultats vous inquiètent ? N'hésitez pas à contacter votre banque pour leur signaler que leur site n'offre pas les meilleures garanties
-        de confidentialité.
-      </ul>
-      <ul class="postContent">
+        Les tests ne se font que sur la connexion aux sites, en aucun cas sur la partie applicative.
+
         Le site comporte <span id="bankers"></span> banques (dernière mise à jour: <span id="update"></span>).<br>
-        La note moyenne est de <span id="average_front"></span> (site) et <span id="average_ebanking"></span> (e-banking)
+        La note moyenne est de <span id="average_front"></span> (site) et
+        <span id="average_ebanking"></span> (e-banking).<br>
+        Le maximum possible est de <span id="max_grade"></span>.
+
+        <h3>Une mauvaise note ne veut pas dire que les données sont en accès libre !</h3>
+        Du moment qu'une connexion SSL/TLS existe et est employée, les données en transit sont chiffrées.
+        Le cassage du chiffrement (décryptage) demande des efforts (temps machine), et coûte en ressources.<br>
+        Si le chiffrement est réputé faible, cela demandera "moins" de temps machine pour le casser. Mais cela reste
+        hors de portée de votre voisin ou même d'un hacker.
+
+        <h3>Les résultats vous inquiètent ?</h3>
+        Ne paniquez pas ! Ou du moins pas de suite. Signalez simplement à votre banque que la connexion n'offre
+        pas toutes les garanties de confidentialité. Certaines réagissent favorablement, et prennent des mesures
+        correctrices — la votre en fait peut-être partie.
+
+        <h3>Comment ça marche ?</h3>
+        Basé sur <a href="https://github.com/nabla-c0d3/sslyze">SSLyze</a>, un script récupère les capacités de connexion
+        des différents sites, analyse le tout, et procède à une notation. Le détail des notes est visible en cliquant
+        le "+" en bas de chaque résultat.
+
+        <h3>Pourquoi des fluctuations dans les nodes depuis le lancement ?</h3>
+        Le dernier système mis en place était trop dur, et ne tenait pas compte d'une chose importante dans le processus de connexion
+        SSL/TLS : l'ordre des ciphers (algorithmes de chiffrement) proposé par le serveur distant.<br>
+        Un débat <a href="https://ethack.org/article/74/banquignols_test_de_connexion_ssl#comment-57">a eu lieu</a>,
+        remettant en cause la manière de calculer le tout.<br>
+        De manière à simplifier et rendre les choses plus compréhensibles, certains points ont été écartés (localisation géographique
+        des serveurs par exemple), d'autres ont été ajoutés (OCSP Stapling par exemple).<br>
+
+        Pour la partie la plus controversée (ciphers), on s'est basé sur les préférés, de manière à prendre en compte ce que le serveur
+        demande avant tout.
       </ul>
+      <div class="postContent hidding" xattr="banks">
+        <ul class="postContent">
+          <h3>Détail de la notation</h3>
+          <ul>
+            <li>Certificat (commonName) : contrôle si le certificat correspond au nom de domaine.</li>
+            <li>Certificat (échéance) : contrôle si le certificat est encore valide.</li>
+            <li>Ciphers : contrôle les
+              <a href="https://en.wikipedia.org/wiki/Cipher_suite">ciphers</a> présents et employés.
+            </li>
+            <li>Flash : contrôle la présence du plugin Flash d'Adobe, réputé pour ses failles de sécurité</li>
+            <li>Frame : contrôle si le site utilise des
+                <a href="https://en.wikipedia.org/wiki/Framing_%28World_Wide_Web%29">frames</a> et
+                si elles sont protégées correctement.
+            </li>
+            <li>HSTS : contrôle la présence de l'en-tête
+                <a href="https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a>.
+            </li>
+            <li>OCSP stapling : contrôle si le serveur répond aux
+                <a href="https://en.wikipedia.org/wiki/OCSP_stapling">requêtes OCSP</a>.
+            </li>
+            <li>Protocoles : contrôle que les derniers protocoles sont biens activés
+                (conseillé : TLSv1, TLSv1.1, TLSv1.2).
+            </li>
+            <li>Redirection SSL : contrôle si le site force le SSL.</li>
+            <li>Signature : contrôle l'algorithme de signature du certificat (conseillé : SHA256).</li>
+            <li>Taille de la clef : contrôle la taille de la clef associée au certificat (minimum conseillé : 2048b).</li>
+            <li>Trackers : contrôle la présence d'outils de métriques externes.</li>
+          </ul>
+        </ul>
+      </div>
+      <button class="more" title="more" xattr="banks"></button>
+      <button class="more" title="less" xattr="banks"></button>
       </section>
       <nav id="loading"><p></p></nav>
       </article>
