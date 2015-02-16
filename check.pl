@@ -178,6 +178,7 @@ sub sslyze {
       );
       my $tmp_json = $json_obj->decode($xml2js->obj2json($tmpdata));
       push @{$local_json->{'results'}}, $tmp_json->{'results'}->{'target'};
+      unlink $out_tmp;
     }
 
     if ($backend) {
@@ -211,6 +212,7 @@ sub sslyze {
         );
         my $tmp_json = $json_obj->decode($xml2js->obj2json($tmpdata));
         push @{$local_json->{'results'}}, $tmp_json->{'results'}->{'target'};
+        unlink $out_tmp;
       }
       
     }
