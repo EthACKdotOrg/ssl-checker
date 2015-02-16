@@ -288,11 +288,11 @@ sub compute {
       if ($d->{'type'} && $d->{'type'} =~ /^(EC)?DH$/) {
         $grade += 0.5;
         $values->{'grades'}->{'ciphers'}  += 0.5;
-        if ($d->{'type'} =~ /^DH$/ && $d->{'keySize'} >= 2048) {
+        if ($d->{'type'} =~ /^DH$/ && $d->{'ksize'} >= 1024) {
           $values->{'grades'}->{'ciphers'}  += 0.5;
           $grade += 0.5;
         }
-        if ($d->{'type'} =~ /^ECDH$/ && $d->{'keySize'} >= 256) {
+        if ($d->{'type'} =~ /^ECDH$/ && $d->{'ksize'} >= 256) {
           $values->{'grades'}->{'ciphers'}  += 0.5;
           $grade += 0.5;
         }
@@ -334,7 +334,7 @@ sub compute {
 
     # certificate valid for used domain?
     $values->{'grades'}->{'cert_match'} = 0;
-    if ($values->{'key'}->{'commonName'} eq $host) {
+    if ($values->{'key'}->{'hostnameValidation'}->{'certificateMatchesServerHostname'}) {
       $grade += 1;
       $values->{'grades'}->{'cert_match'} = 1;
     }

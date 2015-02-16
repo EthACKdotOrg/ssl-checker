@@ -86,7 +86,7 @@ sub get_cert_info {
   my $ocsp = 0;
   if (
     exists $el->{'certinfo'}->{'ocspStapling'}->{'responseStatus'} &&
-    $site_cert->{'ocspStapling'}->{'responseStatus'} eq 'successful'
+    $el->{'certinfo'}->{'ocspStapling'}->{'responseStatus'} eq 'successful'
   ) {
     $ocsp = 1;
   }
@@ -94,6 +94,7 @@ sub get_cert_info {
   return {
     altNames           => $site_cert->{'extensions'}->{'X509v3SubjectAlternativeName'}->{'listEntry'},
     commonName         => $site_cert->{'subject'}->{'commonName'},
+    hostnameValidation => $el->{'certinfo'}->{'certificateValidation'}->{'hostnameValidation'},
     issuer             => $site_cert->{'issuer'}->{'commonName'},
     keySize            => $site_cert->{'subjectPublicKeyInfo'}->{'publicKeySize'},
     notAfter           => $site_cert->{'validity'}->{'notAfter'},
@@ -113,16 +114,21 @@ sub get_ciphers {
   my @tlsv1_1 = keys %{$el->{'tlsv1_1'}->{'acceptedCipherSuites'}->{'cipherSuite'}};
   my @tlsv1_2 = keys %{$el->{'tlsv1_2'}->{'acceptedCipherSuites'}->{'cipherSuite'}};
 
-  my (%ciphers, $tmp, @tmp);
+  my (%ciphers, $tmp, @tmp, $ksize);
   foreach my $proto (qw/sslv2 sslv3 tlsv1 tlsv1_1 tlsv1_2/) {
     eval {
       @tmp = keys %{$el->{$proto}->{'acceptedCipherSuites'}->{'cipherSuite'}};
       foreach my $cipher (@tmp) {
         $tmp = $el->{$proto}->{'acceptedCipherSuites'}->{'cipherSuite'}->{$cipher};
         if (!$ciphers{$cipher}) {
+          if (exists $tmp->{'keyExchange'}->{'GroupSize'}) {
+            $ksize = $tmp->{'keyExchange'}->{'GroupSize'};
+          } else {
+            $ksize = $tmp->{'keySize'};
+          }
           $ciphers{$cipher} = {
-            keySize => $tmp->{'keySize'},
-            type    => $tmp->{'keyExchange'}->{'Type'},
+            ksize => $ksize,
+            type  => $tmp->{'keyExchange'}->{'Type'},
           };
         }
       }
@@ -153,11 +159,11 @@ sub get_preferred {
   my $tlsv1_2 = $el->{'tlsv1_2'}->{'preferredCipherSuite'}->{'cipherSuite'};
 
   return {
-    sslv2   => {name => $sslv2->{'name'},  keySize => $sslv2->{'keySize'}, type => $sslv2->{'keyExchange'}{'Type'}},
-    sslv3   => {name => $sslv3->{'name'},  keySize => $sslv3->{'keySize'}, type => $sslv3->{'keyExchange'}{'Type'}},
-    tlsv1   => {name => $tlsv1->{'name'},  keySize => $tlsv1->{'keySize'}, type => $tlsv1->{'keyExchange'}{'Type'}},
-    tlsv1_1 => {name => $tlsv1_1->{'name'}, keySize => $tlsv1_1->{'keySize'}, type => $tlsv1_1->{'keyExchange'}{'Type'}},
-    tlsv1_2 => {name => $tlsv1_2->{'name'}, keySize => $tlsv1_2->{'keySize'}, type => $tlsv1_2->{'keyExchange'}{'Type'}},
+    sslv2   => {name => $sslv2->{'name'},   ksize => $sslv2->{'keyExchange'}->{'GroupSize'},  type => $sslv2->{'keyExchange'}{'Type'}},
+    sslv3   => {name => $sslv3->{'name'},   ksize => $sslv3->{'keyExchange'}->{'GroupSize'},  type => $sslv3->{'keyExchange'}{'Type'}},
+    tlsv1   => {name => $tlsv1->{'name'},   ksize => $tlsv1->{'keyExchange'}->{'GroupSize'},  type => $tlsv1->{'keyExchange'}{'Type'}},
+    tlsv1_1 => {name => $tlsv1_1->{'name'}, ksize => $tlsv1_1->{'keyExchange'}->{'GroupSize'}, type => $tlsv1_1->{'keyExchange'}{'Type'}},
+    tlsv1_2 => {name => $tlsv1_2->{'name'}, ksize => $tlsv1_2->{'keyExchange'}->{'GroupSize'}, type => $tlsv1_2->{'keyExchange'}{'Type'}},
   };
 }
 
