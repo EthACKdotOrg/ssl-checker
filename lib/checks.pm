@@ -85,8 +85,8 @@ sub get_cert_info {
 
   my $ocsp = 0;
   if (
-    exists $el->{'certinfo'}->{'ocspStapling'}->{'responseStatus'} &&
-    $el->{'certinfo'}->{'ocspStapling'}->{'responseStatus'} eq 'successful'
+    exists $el->{'certinfo'}->{'ocspResponse'}->{'responseStatus'} &&
+    $el->{'certinfo'}->{'ocspResponse'}->{'responseStatus'} eq 'successful'
   ) {
     $ocsp = 1;
   }
