@@ -191,6 +191,7 @@ sub get_page_info {
 
   my $req = HTTP::Request->new('GET',"http://${host}/");
   my $res = $ua->request($req);
+  my $_headers = $res->headers;
   my @redirects = $res->redirects;
   if ($res->code != 200) {
     $force_ssl = 2;
@@ -203,6 +204,8 @@ sub get_page_info {
       } else {
         $force_ssl = 0;
       }
+    } elsif (exists $_headers->{'client-ssl-cert-subject'}) {
+      $force_ssl = 1;
     } else {
       $force_ssl = 0;
     }
